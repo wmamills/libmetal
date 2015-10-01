@@ -1,0 +1,70 @@
+collector_create (PROJECT_LIB_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}")
+collector_create (PROJECT_LIB_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}")
+
+collect (PROJECT_LIB_DIRS "${CMAKE_CURRENT_BINARY_DIR}")
+collect (PROJECT_INC_DIRS "${CMAKE_CURRENT_BINARY_DIR}")
+
+collect (PROJECT_LIB_HEADERS atomic.h)
+collect (PROJECT_LIB_HEADERS compiler.h)
+collect (PROJECT_LIB_HEADERS config.h)
+collect (PROJECT_LIB_HEADERS device.h)
+collect (PROJECT_LIB_HEADERS domain.h)
+collect (PROJECT_LIB_HEADERS io.h)
+collect (PROJECT_LIB_HEADERS list.h)
+collect (PROJECT_LIB_HEADERS log.h)
+collect (PROJECT_LIB_HEADERS mutex.h)
+collect (PROJECT_LIB_HEADERS shmem.h)
+collect (PROJECT_LIB_HEADERS sys.h)
+collect (PROJECT_LIB_HEADERS utilities.h)
+collect (PROJECT_LIB_HEADERS version.h)
+
+collect (PROJECT_LIB_SOURCES device.c)
+collect (PROJECT_LIB_SOURCES init.c)
+collect (PROJECT_LIB_SOURCES log.c)
+collect (PROJECT_LIB_SOURCES shmem.c)
+collect (PROJECT_LIB_SOURCES version.c)
+
+add_subdirectory (gcc)
+add_subdirectory (${PROJECT_SYSTEM})
+
+collector_list (_inc_dirs PROJECT_INC_DIRS)
+collector_list (_sources PROJECT_LIB_SOURCES)
+collector_list (_headers PROJECT_LIB_HEADERS)
+collector_list (_deps PROJECT_LIB_DEPS)
+
+foreach (f ${_headers})
+  configure_file (${f} ${PROJECT_NAME}/${f} @ONLY)
+  install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}/${f}
+           DESTINATION include RENAME ${PROJECT_NAME}/${f})
+  if (${f} MATCHES "^[^/]*\\.h")
+    collect (PROJECT_HDR_TESTS "metal/${f}")
+  endif (${f} MATCHES "^[^/]*\\.h")
+endforeach (f)
+
+include_directories (${_inc_dirs})
+add_definitions (-DMETAL_INTERNAL)
+
+# Build a shared library if so configured.
+if (WITH_SHARED_LIB)
+  set (_lib ${PROJECT_NAME}-shared)
+  add_library (${_lib} SHARED ${_sources})
+  target_link_libraries (${_lib} ${_deps})
+  install (TARGETS ${_lib} LIBRARY DESTINATION lib)
+  set_target_properties (${_lib} PROPERTIES
+    OUTPUT_NAME       "${PROJECT_NAME}"
+    VERSION           "${PROJECT_VER}"
+    SOVERSION         "${PROJECT_VER_MAJOR}"
+  )
+endif (WITH_SHARED_LIB)
+
+# Build a static library if so configured.
+if (WITH_STATIC_LIB)
+  set (_lib ${PROJECT_NAME}-static)
+  add_library (${_lib} STATIC ${_sources})
+  install (TARGETS ${_lib} ARCHIVE DESTINATION lib)
+  set_target_properties (${_lib} PROPERTIES
+    OUTPUT_NAME       "${PROJECT_NAME}"
+  )
+endif (WITH_STATIC_LIB)
+
+# vim: expandtab:ts=2:sw=2:smartindent
