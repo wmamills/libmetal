@@ -41,7 +41,7 @@
 #if defined(HAVE_STDATOMIC_H) && !defined(__STDC_NO_ATOMICS__)
 # include <stdatomic.h>
 #elif defined(__GNUC__)
-# include <metal/gcc/atomic.h>
+# include <metal/compiler/gcc/atomic.h>
 #else
 # error "Missing support for atomic operations"
 #endif

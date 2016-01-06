@@ -37,7 +37,7 @@
 #define __METAL_COMPILER__H__
 
 #if defined(__GNUC__)
-# include <metal/gcc/compiler.h>
+# include <metal/compiler/gcc/compiler.h>
 #else
 # error "Missing compiler support"
 #endif

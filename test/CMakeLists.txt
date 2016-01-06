@@ -1,6 +1,6 @@
 collector_create (PROJECT_LIB_TESTS "${CMAKE_CURRENT_SOURCE_DIR}")
 
-add_subdirectory (${PROJECT_SYSTEM})
+add_subdirectory (system)
 
 collect (PROJECT_LIB_TESTS version.c)
 collect (PROJECT_LIB_TESTS main.c)

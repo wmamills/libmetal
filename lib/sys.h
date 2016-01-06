@@ -102,7 +102,7 @@ struct metal_common_state {
 
 struct metal_state;
 
-#include <metal/@PROJECT_SYSTEM@/sys.h>
+#include <metal/system/@PROJECT_SYSTEM@/sys.h>
 
 /** System specific runtime data. */
 extern struct metal_state _metal;

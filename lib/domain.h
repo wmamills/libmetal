@@ -49,7 +49,7 @@ extern "C" {
 /** Opaque domain data structure. */
 struct metal_domain;
 
-#include <metal/@PROJECT_SYSTEM@/domain.h>
+#include <metal/system/@PROJECT_SYSTEM@/domain.h>
 
 /**
  * @brief	Initialize a libmetal domain.
