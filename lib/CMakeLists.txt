@@ -25,6 +25,7 @@ collect (PROJECT_LIB_SOURCES shmem.c)
 collect (PROJECT_LIB_SOURCES version.c)
 
 add_subdirectory (compiler)
+add_subdirectory (processor)
 add_subdirectory (system)
 
 collector_list (_inc_dirs PROJECT_INC_DIRS)

@@ -29,21 +29,12 @@
  */
 
 /*
- * @file	atomic.h
- * @brief	Atomic primitives for libmetal.
+ * @file	gcc/atomic.h
+ * @brief	GCC specific atomic primitives for libmetal.
  */
 
-#ifndef __METAL_ATOMIC__H__
-#define __METAL_ATOMIC__H__
+#ifndef __METAL_X86_64_ATOMIC__H__
+#define __METAL_X86_64_ATOMIC__H__
 
-#include <metal/config.h>
 
-#if defined(HAVE_STDATOMIC_H) && !defined(__STDC_NO_ATOMICS__)
-# include <stdatomic.h>
-#elif defined(__GNUC__)
-# include <metal/compiler/gcc/atomic.h>
-#else
-# include <metal/processor/@PROJECT_PROCESSOR@/atomic.h>
-#endif
-
-#endif /* __METAL_ATOMIC__H__ */
+#endif /* __METAL_X86_64_ATOMIC__H__ */
