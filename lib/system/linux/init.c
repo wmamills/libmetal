@@ -33,6 +33,8 @@
  * @brief	Linux libmetal initialization.
  */
 
+#include <sys/types.h>
+
 #include <metal/sys.h>
 #include <metal/utilities.h>
 
@@ -46,18 +48,26 @@ static int metal_pagesize_compare(const void *_a, const void *_b)
 	return metal_sign(diff);
 }
 
-static int metal_add_hugepage_size(unsigned long size, const char *path)
+static int metal_add_page_size(const char *path, int shift, int mmap_flags)
 {
 	int index = _metal.num_page_sizes;
+	unsigned long size = 1UL << shift;
 
-	if (index >= MAX_PAGE_SIZES || !path) {
-		metal_log(LOG_WARNING, "skipped page size %ld (%s)\n",
-			  size, path ? "too many sizes" : "not mounted");
+	if (index >= MAX_PAGE_SIZES) {
+		metal_log(LOG_WARNING, "skipped page size %ld - overflow\n",
+			  size);
+		return -EOVERFLOW;
+	}
+
+	if (!path || shift <= 0) {
+		metal_log(LOG_WARNING, "skipped page size %ld - invalid args\n",
+			  size);
 		return -EINVAL;
 	}
 
+	_metal.page_sizes[index].page_shift = shift;
 	_metal.page_sizes[index].page_size = size;
-	_metal.page_sizes[index].page_shift = metal_log2(size);
+	_metal.page_sizes[index].mmap_flags = mmap_flags;
 	strncpy(_metal.page_sizes[index].path, path, PATH_MAX);
 	_metal.num_page_sizes ++;
 
@@ -66,24 +76,57 @@ static int metal_add_hugepage_size(unsigned long size, const char *path)
 	return 0;
 }
 
-int metal_sys_init(const struct metal_init_params *params)
+static int metal_init_page_sizes(void)
 {
 	const int max_sizes = MAX_PAGE_SIZES - 1;
-	static char sysfs_path[SYSFS_PATH_MAX];
 	long sizes[max_sizes];
-	int count, i, result;
-	const char *tmp_path;
-	unsigned int seed;
-	FILE* urandom;
+	int i, count;
 
 	/* Determine system page size. */
-	result = getpagesize();
-	if (result <= 0) {
+	sizes[0] = getpagesize();
+	if (sizes[0] <= 0) {
 		metal_log(LOG_ERROR, "failed to get page size\n");
 		return -ENOSYS;
 	}
-	_metal.page_size  = result;
-	_metal.page_shift = metal_log2(result);
+	_metal.page_size  = sizes[0];
+	_metal.page_shift = metal_log2(sizes[0]);
+	metal_add_page_size(_metal.tmp_path, _metal.page_shift, 0);
+
+#ifndef MAP_HUGE_SHIFT
+	/* System does not support multiple huge page sizes. */
+	sizes[0] = gethugepagesize();
+	if (sizes[0] > 0) {
+		metal_add_page_size(hugetlbfs_find_path(),
+				    metal_log2(sizes[0]),
+				    MAP_HUGETLB);
+	}
+#else
+	/* System supports multiple huge page sizes. */
+	count = gethugepagesizes(sizes, max_sizes);
+	for (i = 0; i < count; i++) {
+		int shift = metal_log2(sizes[i]);
+		if (shift & MAP_HUGE_MASK != shift)
+			continue;
+		metal_add_page_size(hugetlbfs_find_path_for_size(sizes[i]),
+				    shift, (MAP_HUGETLB |
+					    (shift << MAP_HUGE_SHIFT)));
+	}
+#endif
+
+	/* Finally sort the resulting array by size. */
+	qsort(_metal.page_sizes, _metal.num_page_sizes,
+	      sizeof(struct metal_page_size), metal_pagesize_compare);
+
+	return 0;
+}
+
+int metal_sys_init(const struct metal_init_params *params)
+{
+	static char sysfs_path[SYSFS_PATH_MAX];
+	const char *tmp_path;
+	unsigned int seed;
+	FILE* urandom;
+	int result;
 
 	/* Determine sysfs mount point. */
 	result = sysfs_get_mnt_path(sysfs_path, sizeof(sysfs_path));
@@ -111,23 +154,13 @@ int metal_sys_init(const struct metal_init_params *params)
 	fclose(urandom);
 	srand(seed);
 
-	/* Setup page size list. */
-	metal_add_hugepage_size(_metal.page_size, _metal.tmp_path);
-	count = gethugepagesizes(sizes, max_sizes);
-	for (i = 0; i < count; i++) {
-		const char *loc = hugetlbfs_find_path_for_size(sizes[i]);
-		metal_add_hugepage_size(sizes[i], loc);
-	}
-
-	qsort(_metal.page_sizes, _metal.num_page_sizes,
-	      sizeof(struct metal_page_size), metal_pagesize_compare);
+	result = metal_init_page_sizes();
+	if (result < 0)
+		return result;
 
 	result = metal_linux_bus_init();
-	if (result < 0) {
-		metal_log(LOG_DEBUG, "Failed bus initialization - %s\n",
-			  strerror(-result));
+	if (result < 0)
 		return result;
-	}
 
 	result = open("/proc/self/pagemap", O_RDONLY | O_CLOEXEC);
 	if (result < 0) {

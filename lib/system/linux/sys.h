@@ -77,6 +77,9 @@ struct metal_page_size {
 
 	/** Path to hugetlbfs (or tmpfs) mount point. */
 	char path[PATH_MAX];
+
+	/** Flags to use for mmap. */
+	int mmap_flags;
 };
 
 /** Structure of linux specific libmetal runtime state. */
