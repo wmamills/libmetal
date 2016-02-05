@@ -37,7 +37,7 @@
 #include <metal/sys.h>
 #include <metal/utilities.h>
 
-int metal_register_generic_shmem(struct metal_shmem *shmem)
+int metal_shmem_register_generic(struct metal_generic_shmem *shmem)
 {
 	/* Make sure that we can be found. */
 	assert(shmem->name && strlen(shmem->name) != 0);
@@ -50,26 +50,21 @@ int metal_register_generic_shmem(struct metal_shmem *shmem)
 	return 0;
 }
 
-int metal_shmem_open_generic(struct metal_domain *domain,
-			     const char *name, size_t *size,
-			     struct metal_shmem **result)
+int metal_shmem_open_generic(const char *name, size_t size,
+			     struct metal_io_region **result)
 {
+	struct metal_generic_shmem *shmem;
 	struct metal_list *node;
-	struct metal_shmem *shmem;
 
 	metal_list_for_each(&_metal.common.generic_shmem_list, node) {
-		shmem = metal_container_of(node, struct metal_shmem, node);
+		shmem = metal_container_of(node, struct metal_generic_shmem, node);
 		if (strcmp(shmem->name, name) != 0)
 			continue;
-		*size = metal_io_region_size(&shmem->io);
-		*result = shmem;
+		if (size > metal_io_region_size(&shmem->io))
+			continue;
+		*result = &shmem->io;
 		return 0;
 	}
 
 	return -ENOENT;
-}
-
-void metal_shmem_close(struct metal_shmem *shmem)
-{
-	metal_io_finish(&shmem->io);
 }

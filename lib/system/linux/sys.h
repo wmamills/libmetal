@@ -117,22 +117,31 @@ struct metal_state {
 extern int metal_linux_bus_init(void);
 extern void metal_linux_bus_finish(void);
 
-extern int metal_open(const char *path);
-extern int metal_open_unlinked(const char *path);
+extern int metal_open(const char *path, int shm);
+extern int metal_open_unlinked(const char *path, int shm);
 extern int metal_mktemp(char *template, int fifo);
 extern int metal_mktemp_unlinked(char *template);
 
 extern int metal_map(int fd, off_t offset, size_t size, int expand,
-		     void **result);
+		     int flags, void **result);
 extern int metal_unmap(void *mem, size_t size);
 extern int metal_mlock(void *mem, size_t size);
 
 extern void metal_randomize_string(char *template);
 extern void metal_mktemp_template(char template[PATH_MAX],
 				  const char *name);
-extern struct metal_page_size *metal_best_fit_page_size(size_t size);
-
 extern int metal_virt2phys(void *addr, unsigned long *phys);
+
+#define metal_for_each_page_size_up(ps)					\
+	for ((ps) = &_metal.page_sizes[0];				\
+	     (ps) <= &_metal.page_sizes[_metal.num_page_sizes - 1];	\
+	     (ps)++)
+
+#define metal_for_each_page_size_down(ps)				\
+	for ((ps) = &_metal.page_sizes[_metal.num_page_sizes - 1];	\
+	     (ps) >= &_metal.page_sizes[0];				\
+	     (ps)--)
+
 #endif
 
 #ifdef __cplusplus

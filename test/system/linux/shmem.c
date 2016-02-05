@@ -30,6 +30,7 @@
 
 #include <metal-test.h>
 #include <metal/log.h>
+#include <metal/mutex.h>
 #include <metal/shmem.h>
 #include <metal/sys.h>
 
@@ -37,25 +38,19 @@ static const int shmem_threads = 10;
 static const int shmem_count = 10;
 static void *shmem_child(void *arg)
 {
-	const char *domain_file = arg;
-	struct metal_domain domain;
+	const char *name = arg;
 	struct {
 		struct metal_mutex	mutex;
 		int			counter;
 	} *virt;
 	struct metal_io_region *io;
-	struct metal_shmem *shmem;
 	unsigned long phys;
-	size_t size = 4096;
+	size_t size = 2 * 1024 * 1024;
 	int error, i, done;
 
-	error = metal_domain_init(&domain, domain_file);
+	error = metal_shmem_open(arg, size, &io);
 	assert(!error);
 
-	error = metal_shmem_open(&domain, "foo", &size, &shmem);
-	assert(!error);
-
-	io = metal_shmem_to_io_region(shmem);
 	virt = metal_io_virt(io, 0);
 	phys = metal_io_phys(io, 0);
 	if (phys != METAL_BAD_OFFSET) {
@@ -63,30 +58,14 @@ static void *shmem_child(void *arg)
 		assert(phys == metal_io_virt_to_phys(io, virt));
 	}
 
-	for (i = 0; i < shmem_count; i++) {
-		metal_mutex_acquire(&virt->mutex);
-		usleep(1);
-		virt->counter++;
-		metal_mutex_release(&virt->mutex);
-	}
 
-	do {
-		metal_mutex_acquire(&virt->mutex);
-		done = (virt->counter == shmem_threads * shmem_count);
-		metal_mutex_release(&virt->mutex);
-	} while (!done);
-
-	metal_shmem_close(shmem);
-
-	metal_domain_finish(&domain);
+	metal_io_finish(io);
 	return NULL;
 }
 
 static int shmem(void)
 {
-	char *domain_file = "/tmp/metal-test-domain";
-	int error = metal_run(shmem_threads, shmem_child, domain_file);
-	unlink(domain_file);
+	int error = metal_run(shmem_threads, shmem_child, "/foo");
 	return error;
 }
 METAL_ADD_TEST(shmem);

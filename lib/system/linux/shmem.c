@@ -33,146 +33,106 @@
  * @brief	Linux libmetal shared memory handling.
  */
 
-#include <metal/domain.h>
 #include <metal/shmem.h>
 #include <metal/sys.h>
+#include <metal/utilities.h>
 
-struct metal_shmem_ctor_args
-{
-	struct metal_shmem	*shmem;
-	unsigned long		pages;
-	unsigned long		page_size;
-	unsigned long		page_shift;
+struct metal_shmem {
+	struct metal_io_region	io;
+	metal_phys_addr_t	*phys;
 };
 
 static void metal_shmem_io_close(struct metal_io_region *io)
 {
-	struct metal_shmem *shmem;
-
-	shmem = metal_container_of(io, struct metal_shmem, io);
 	metal_unmap(io->virt, io->size);
 	free((void *)io->physmap);
-	metal_resource_close(shmem->domain, shmem->index);
 }
 
 static const struct metal_io_ops metal_shmem_io_ops = {
 	NULL, NULL, metal_shmem_io_close
 };
 
-static int metal_shmem_ctor(struct metal_domain *domain,
-			    struct metal_resource *resource,
-			    int create, unsigned int index,
-			    void *_args)
+static int metal_shmem_try_map(struct metal_page_size *ps, int fd, size_t size,
+			       struct metal_io_region **result)
 {
-	struct metal_shmem_ctor_args *args = _args;
-	struct metal_shmem *shmem = args->shmem;
+	size_t pages, page, phys_size;
+	struct metal_io_region *io;
 	metal_phys_addr_t *phys;
-	size_t phys_size, size;
-	unsigned long page;
-	void *mem = NULL;
-	int result, fd;
 	uint8_t *virt;
+	void *mem;
+	int error;
 
-	if (create) {
-		resource->info.shmem.pages	= args->pages;
-		resource->info.shmem.page_size	= args->page_size;
-		resource->info.shmem.page_shift	= args->page_shift;
-	} else {
-		args->pages	 = resource->info.shmem.pages;
-		args->page_size	 = resource->info.shmem.page_size;
-		args->page_shift = resource->info.shmem.page_shift;
+	size = metal_align_up(size, ps->page_size);
+	pages = size / ps->page_size;
+
+	error = metal_map(fd, 0, size, 1, ps->mmap_flags, &mem);
+	if (error) {
+		metal_log(LOG_ERROR, "failed to mmap shmem - %s\n",
+			  strerror(-error));
+		return error;
 	}
 
-	phys_size = sizeof(*phys) * args->pages;
+	error = metal_mlock(mem, size);
+	if (error) {
+		metal_log(LOG_ERROR, "failed to mlock shmem - %s\n",
+			  strerror(-error));
+		metal_unmap(mem, size);
+		return error;
+	}
+
+	phys_size = sizeof(*phys) * pages;
 	phys = malloc(phys_size);
 	if (!phys) {
-		metal_log(LOG_ERROR, "shmem phys alloc failed\n");
+		metal_unmap(mem, size);
 		return -ENOMEM;
 	}
 
-	result = (create
-		  ? metal_mktemp(resource->path, 0)
-		  : metal_open(resource->path));
-	if (result < 0) {
-		metal_log(LOG_ERROR, "shmem mktemp %s failed - %s\n",
-			  resource->path, strerror(-result));
+	io = malloc(sizeof(*io));
+	if (!io) {
 		free(phys);
-		return result;
-	}
-	fd = result;
-
-	shmem->domain = domain;
-	shmem->index = index;
-	shmem->name = resource->name;
-	size = args->pages << args->page_shift;
-
-	result = metal_map(fd, 0, size, 1, &mem);
-	result = result ? result : metal_mlock(mem, size);
-	close(fd);
-
-	if (result) {
-		metal_log(LOG_ERROR, "failed mmap/mlock on %s - %s\n",
-			  resource->path, strerror(-result));
-		free(phys);
-		if (mem)
-			metal_unmap(mem, size);
-		if (create)
-			unlink(resource->path);
-		return result;
+		metal_unmap(mem, size);
+		return -ENOMEM;
 	}
 
-	for (virt = mem, page = 0; page < args->pages; page++) {
-		size_t offset = page * args->page_size;
-		result = metal_virt2phys(virt + offset, &phys[page]);
-		if (result < 0)
+	for (virt = mem, page = 0; page < pages; page++) {
+		size_t offset = page * ps->page_size;
+		error = metal_virt2phys(virt + offset, &phys[page]);
+		if (error < 0)
 			phys[page] = METAL_BAD_OFFSET;
 	}
 
-	metal_io_init(&shmem->io, mem, phys, size, args->page_shift,
-		      &metal_shmem_io_ops);
+	metal_io_init(io, mem, phys, size, ps->page_shift, &metal_shmem_io_ops);
+	*result = io;
 
 	return 0;
 }
 
-int metal_shmem_open(struct metal_domain *domain,
-		     const char *name, size_t *size,
-		     struct metal_shmem **result)
+int metal_shmem_open(const char *name, size_t size,
+		     struct metal_io_region **result)
 {
-	struct metal_shmem_ctor_args args = { };
-	struct metal_resource template = { };
+	const int flags = O_RDWR | O_CREAT | O_CLOEXEC;
+	const int mode = S_IRUSR | S_IWUSR;
 	struct metal_page_size *ps;
-	struct metal_shmem *shmem;
-	int error;
+	int fd, error;
 
-	error = metal_shmem_open_generic(domain, name, size, result);
+	error = metal_shmem_open_generic(name, size, result);
 	if (!error)
 		return error;
 
-	shmem = malloc(sizeof(*shmem));
-	if (!shmem)
-		return -ENOMEM;
-
-	memset(shmem, 0, sizeof(*shmem));
-	ps = metal_best_fit_page_size(*size);
-	template.type = METAL_ELEMENT_SHMEM;
-	strncpy(template.name, name, PATH_MAX);
-	snprintf(template.path, PATH_MAX, "%s/metal-data-XXXXXX", ps->path);
-
-	args.shmem	= shmem;
-	args.page_size	= ps->page_size;
-	args.page_shift	= ps->page_shift;
-	args.pages	= metal_div_round_up(*size, args.page_size);
-
-	error = metal_resource_open(domain, &template, metal_shmem_ctor, &args);
-	if (error) {
-		metal_log(LOG_ERROR, "shmem open of %s failed - %s\n",
-			  name, strerror(-error));
-		free(shmem);
+	error = metal_open(name, 1);
+	if (error < 0)
 		return error;
+	fd = error;
+
+	/* Iterate through page sizes in decreasing order. */
+	metal_for_each_page_size_down(ps) {
+		if (ps->page_size > 2 * size)
+			continue;
+		error = metal_shmem_try_map(ps, fd, size, result);
+		if (!error)
+			break;
 	}
 
-	*size = metal_io_region_size(&shmem->io);
-	*result = shmem;
-
-	return 0;
+	close(fd);
+	return error;
 }

@@ -36,7 +36,6 @@
 #ifndef __METAL_SHMEM__H__
 #define __METAL_SHMEM__H__
 
-#include <metal/domain.h>
 #include <metal/io.h>
 
 #ifdef __cplusplus
@@ -46,67 +45,58 @@ extern "C" {
 /** \defgroup shmem Shared Memory Interfaces
  *  @{ */
 
-/** Shared memory data structure. */
-struct metal_shmem {
+/** Generic shared memory data structure. */
+struct metal_generic_shmem {
 	const char		*name;
 	struct metal_io_region	io;
-	struct metal_domain	*domain;
-	unsigned int		index;
 	struct metal_list	node;
 };
+
+/**
+ * @brief	Open a libmetal shared memory segment.
+ *
+ * Open a shared memory segment.
+ *
+ * @param[in]		name	Name of segment to open.
+ * @param[in]		size	Size of segment.
+ * @param[out]		io	I/O region handle, if successful.
+ * @return	0 on success, or -errno on failure.
+ *
+ * @see metal_shmem_create
+ */
+extern int metal_shmem_open(const char *name, size_t size,
+			    struct metal_io_region **io);
 
 /**
  * @brief	Statically register a generic shared memory region.
  *
  * Shared memory regions may be statically registered at application
- * initialization, or may be dynamically opened via a shared domain.  This
- * interface is used for static registration of regions.  Subsequent calls to
- * metal_shmem_open() look up in this list of pre-registered regions.
+ * initialization, or may be dynamically opened.  This interface is used for
+ * static registration of regions.  Subsequent calls to metal_shmem_open() look
+ * up in this list of pre-registered regions.
  *
  * @param[in]	shmem	Generic shmem structure.
  * @return 0 on success, or -errno on failure.
  */
-extern int metal_register_generic_shmem(struct metal_shmem *shmem);
+extern int metal_shmem_register_generic(struct metal_generic_shmem *shmem);
+
+#ifdef METAL_INTERNAL
 
 /**
- * @brief	Open a libmetal shared memory segment.
+ * @brief	Open a statically registered shmem segment.
  *
- * Open a memory segment shared with other peers within a libmetal domain.  The
- * segment must have been previously created.
+ * This interface is meant for internal libmetal use within system specific
+ * shmem implementations.
  *
- * @param[in]		domain	Domain in which to open memory segment.
- * @param[in]		name	Name (unique within domain) of segment to open.
- * @param[in, out]	size	Size of segment.
- * @param[out]		shmem	Shared memory segment handle, if successful.
+ * @param[in]		name	Name of segment to open.
+ * @param[in]		size	Size of segment.
+ * @param[out]		io	I/O region handle, if successful.
  * @return	0 on success, or -errno on failure.
- *
- * @see metal_shmem_create
  */
-extern int metal_shmem_open(struct metal_domain *domain,
-			    const char *name, size_t *size,
-			    struct metal_shmem **shmem);
+int metal_shmem_open_generic(const char *name, size_t size,
+			     struct metal_io_region **result);
 
-/**
- * @brief	Close a libmetal shared memory segment.
- *
- * Close a memory segment shared with other peers within a domain.  The calling
- * process must no longer have any part of the shared memory segment mapped.
- *
- * @param[in]	shmem	Shared memory segment handle.
- */
-extern void metal_shmem_close(struct metal_shmem *shmem);
-
-/**
- * @brief	Get an I/O region accessor for a shared memory region.
- *
- * @param[in]	shmem	Shared memory segment handle.
- * @return I/O accessor handle, or NULL on failure.
- */
-static inline struct metal_io_region *
-metal_shmem_to_io_region(struct metal_shmem *shmem)
-{
-	return &shmem->io;
-}
+#endif
 
 /** @} */
 

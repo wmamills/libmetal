@@ -199,7 +199,7 @@ static int metal_uio_dev_open(struct linux_bus *lbus, struct linux_device *ldev)
 		return -ENODEV;
 	}
 
-	result = metal_open(ldev->dev_path);
+	result = metal_open(ldev->dev_path, 0);
 	if (result < 0) {
 		metal_log(LOG_ERROR, "failed to open device %s\n",
 			  ldev->dev_path, strerror(-result));
@@ -219,7 +219,7 @@ static int metal_uio_dev_open(struct linux_bus *lbus, struct linux_device *ldev)
 		result = (result ? result :
 			 metal_uio_read_map_attr(ldev, i, "size", &size));
 		result = (result ? result :
-			 metal_map(ldev->fd, offset, size, 0, &virt));
+			 metal_map(ldev->fd, offset, size, 0, 0, &virt));
 		if (!result) {
 			io = &ldev->device.regions[ldev->device.num_regions];
 			metal_io_init(io, virt, phys, size, -1, NULL);

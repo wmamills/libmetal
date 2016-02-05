@@ -43,9 +43,10 @@
  * O_CLOEXEC flag set.
  *
  * @param[in]	path	File path to open.
+ * @param[in]	shm	Open shared memory (via shm_open) if non-zero.
  * @return	File descriptor.
  */
-int metal_open(const char *path)
+int metal_open(const char *path, int shm)
 {
 	const int flags = O_RDWR | O_CREAT | O_CLOEXEC;
 	const int mode = S_IRUSR | S_IWUSR;
@@ -54,7 +55,7 @@ int metal_open(const char *path)
 	if (!path || !strlen(path))
 		return -EINVAL;
 
-	fd = open(path, flags, mode);
+	fd = shm ? shm_open(path, flags, mode) : open(path, flags, mode);
 	return fd < 0 ? -errno : fd;
 }
 
@@ -68,17 +69,19 @@ int metal_open(const char *path)
  * exit.
  *
  * @param[in]	path	File path to open.
+ * @param[in]	shm	Open shared memory (via shm_open) if non-zero.
  * @return	File descriptor.
  */
-int metal_open_unlinked(const char *path)
+int metal_open_unlinked(const char *path, int shm)
 {
 	int fd, error;
 
-	fd = metal_open(path);
+	fd = metal_open(path, shm);
 	if (fd < 0)
 		return fd;
 
-	error = unlink(path) < 0 ? -errno : 0;
+	error = shm ? shm_unlink(path) : unlink(path);
+	error = error < 0 ? -errno : 0;
 	if (error)
 		close(fd);
 
@@ -217,15 +220,17 @@ int metal_mktemp_unlinked(char *template)
  * @param[in]	offset	Offset in file to map.
  * @param[in]	size	Size of region to map.
  * @param[in]	expand	Allow file expansion via ftruncate if non-zero.
+ * @param[in]	flags	Flags for mmap(), MAP_SHARED included implicitly.
  * @param[out]	result	Returned pointer to new memory map.
  * @return	0 on success, or -errno on error.
  */
-int metal_map(int fd, off_t offset, size_t size, int expand, void **result)
+int metal_map(int fd, off_t offset, size_t size, int expand, int flags,
+	      void **result)
 {
-	int prot = PROT_READ | PROT_WRITE;
-	int flags = MAP_SHARED;
+	int prot = PROT_READ | PROT_WRITE, error;
 	void *mem;
-	int error;
+
+	flags |= MAP_SHARED;
 
 	if (fd < 0) {
 		fd = -1;
@@ -267,38 +272,6 @@ int metal_unmap(void *mem, size_t size)
 }
 
 /**
- * @brief	Determine the optimal page size to use for a given allocation.
- *
- * This function computes a fit measure over available page sizes, in an
- * attempt to find the best available page size so as to minimize both the
- * number of pages needed to fit the allocation, as well as the amount of
- * memory wasted on the allocation.
- *
- * @param[in]	size	Size of allocation.
- * @return	selected page size.
- */
-struct metal_page_size *metal_best_fit_page_size(size_t size)
-{
-	struct metal_page_size *best_ps = NULL;
-	int best_score = INT_MAX, i;
-
-	for (i = 0; i < _metal.num_page_sizes; i++) {
-		struct metal_page_size *ps = &_metal.page_sizes[i];
-		size_t real_size = metal_align_up(size, ps->page_size);
-		size_t slack = real_size - size;
-		int slack_pages = slack / _metal.page_size;
-		int pages = real_size / ps->page_size;
-		int score = pages + slack_pages;
-
-		if (score < best_score) {
-			best_score = score;
-			best_ps = ps;
-		}
-	}
-	return best_ps;
-}
-
-/**
  * @brief	Lock in a region of the process address space.
  *
  * @param[in]	mem	Pointer to start of region.
@@ -329,7 +302,8 @@ int metal_virt2phys(void *addr, unsigned long *phys)
 
 	/* Check page present and not swapped. */
 	if ((entry >> 62) != 2) {
-		metal_log(LOG_ERROR, "pagemap page not present\n");
+		metal_log(LOG_ERROR, "pagemap page not present, %llx -> %llx\n",
+			  (unsigned long long)offset, (unsigned long long)entry);
 		return -ENOENT;
 	}
 
