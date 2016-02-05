@@ -16,6 +16,9 @@ if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
   find_package(Threads REQUIRED)
   collect (PROJECT_LIB_DEPS "${CMAKE_THREAD_LIBS_INIT}")
 
+  find_package(LibRt REQUIRED)
+  collect (PROJECT_LIB_DEPS "${LIBRT_LIBRARIES}")
+
 endif ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 
 # vim: expandtab:ts=2:sw=2:smartindent
