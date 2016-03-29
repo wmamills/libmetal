@@ -59,8 +59,43 @@ __attribute__ ((constructor)) static void metal_test_##func() {		\
 	metal_add_test_case(&metal_test_##func);			\
 }
 
+/**
+ * @brief        run child threads and wait until all they finish.
+ *               if tids1 is zero, that is not required to store
+ *               threads ids for the caller, it will not return
+ *               until all the threads finishes.
+ * @param[in]    threads how many threads to run
+ * @param[in]    child child child routine which the threads will run
+ * @param[in]    arg argument passed to the child threads
+ *
+ * @return       zero on no errors, non-zero on errors
+ */
 extern int metal_run(int threads, void *(*child)(void *), void *arg);
 
+/**
+ * @brief        run child threads and return without waiting
+ *               for all the threads to finish.
+ * @param[in]    threads  how many threads to run
+ * @param[in]    child child child routine which the threads will run
+ * @param[in]    arg argument passed to the child threads
+ * @param[in]    tids pointers to store the threads ids.
+ *                    the caller is required to make sure the tids is
+ *                    big enough to store all the child threads ids.
+ * @param[out]   threads_out number of threads created
+ *
+ * @return       zero on no errors, non-zero on errors
+ */
+extern int metal_run_noblock(int threads, void *(*child)(void *),
+		    void *arg, void *tids, int *threads_out);
+
+/**
+ * @brief        do not return until all the specified child threads
+ *               finish.
+ * @param[in]    threads how many threads to wait
+ * @param[in]    tids pointers to the threads ids.
+ *
+*/
+extern void metal_finish_threads(int threads, void *tids);
 #ifdef __cplusplus
 }
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Xilinx Inc. and Contributors. All rights reserved.
+ * Copyright (c) 2016, Xilinx Inc. and Contributors. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,46 +28,58 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <metal-test.h>
+#include <pthread.h>
 #include <metal/sys.h>
 #include <metal/utilities.h>
 
-static METAL_DECLARE_LIST(test_cases);
+void metal_finish_threads(int threads, void *tids);
 
-void metal_add_test_case(struct metal_test_case *test_case)
+int metal_run(int threads, void *(*child)(void *), void *arg)
 {
-	metal_list_add_tail(&test_cases, &test_case->node);
+	pthread_t tids[threads];
+	int error, ts_created;
+
+	error = metal_run_noblock(threads, child, arg, tids, &ts_created);
+
+	metal_finish_threads(ts_created, (void *)tids);
+
+	return error;
 }
 
-int main(void)
+int metal_run_noblock(int threads, void *(*child)(void *),
+		     void *arg, void *tids, int *threads_out)
 {
-	struct metal_init_params params = METAL_INIT_DEFAULTS;
-	struct metal_test_case *test_case;
-	struct metal_list *node;
-	int error, errors = 0;
-	const char *dots = "..................................";
-	const char *pad;
+	int error, i;
+	pthread_t *tid_p = (pthread_t *)tids;
 
-	params.log_level = LOG_DEBUG;
-	error = metal_init(&params);
-	if (error)
-		return error;
-
-	metal_list_for_each(&test_cases, node) {
-		test_case = metal_container_of(node, struct metal_test_case,
-					       node);
-		pad = dots + strlen(test_case->name);
-		printf("running [%s]\n", test_case->name);
-		error = test_case->test();
-		printf("result [%s]%s %s%s%s\n",
-		       test_case->name, pad, error ? "fail" : "pass",
-		       error ? " - error: " : "",
-		       error ? strerror(-error) : "");
-		if (error)
-			errors++;
+	if (!tids) {
+		metal_log(LOG_ERROR, "invalid arguement, tids is NULL.\n");
+		return -EINVAL;
 	}
 
-	metal_finish();
+	for (i = 0; i < threads; i++) {
+		error = -pthread_create(&tid_p[i], NULL, child, arg);
+		if (error) {
+			metal_log(LOG_ERROR, "failed to create thread - %s\n",
+				  strerror(error));
+			break;
+		}
+	}
 
-	return errors;
+	*threads_out = i;
+	return error;
+}
+
+void metal_finish_threads(int threads, void *tids)
+{
+	int i;
+	pthread_t *tid_p = (pthread_t *)tids;
+
+	if (!tids) {
+		metal_log(LOG_ERROR, "invalid argument, tids is NULL.\n");
+		return;
+	}
+
+	for (i = 0; i < threads; i++)
+		(void)pthread_join(tid_p[i], NULL);
 }
