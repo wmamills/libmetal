@@ -74,6 +74,11 @@ static inline void metal_mutex_release(struct metal_mutex *mutex)
 	atomic_flag_clear(&mutex->v);
 }
 
+static inline int metal_mutex_is_acquired(struct metal_mutex *mutex)
+{
+	return atomic_load(&mutex->v);
+}
+
 #ifdef __cplusplus
 }
 #endif
