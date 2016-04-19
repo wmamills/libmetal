@@ -43,6 +43,9 @@
 extern "C" {
 #endif
 
+/** \defgroup device Bus Abstraction
+ *  @{ */
+
 #define METAL_MAX_DEVICE_REGIONS	32
 
 struct metal_bus;
@@ -144,6 +147,8 @@ metal_device_io_region(struct metal_device *device, unsigned index)
 		? &device->regions[index]
 		: NULL);
 }
+
+/** @} */
 
 #ifdef __cplusplus
 }

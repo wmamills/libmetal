@@ -42,6 +42,9 @@
 extern "C" {
 #endif
 
+/** \defgroup list List Primitives
+ *  @{ */
+
 struct metal_list {
 	struct metal_list *next, *prev;
 };
@@ -105,6 +108,7 @@ static inline struct metal_list *metal_list_first(struct metal_list *list)
 	for ((node) = (list)->next;		\
 	     (node) != (list);			\
 	     (node) = (node)->next)
+/** @} */
 
 #ifdef __cplusplus
 }

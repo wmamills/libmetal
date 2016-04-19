@@ -43,7 +43,7 @@
 extern "C" {
 #endif
 
-/** \defgroup utilities Simple utilities
+/** \defgroup utilities Simple Utilities
  *  @{ */
 
 /** Marker for unused function arguments/variables. */

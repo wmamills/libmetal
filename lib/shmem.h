@@ -43,6 +43,9 @@
 extern "C" {
 #endif
 
+/** \defgroup shmem Shared Memory Interfaces
+ *  @{ */
+
 /** Shared memory data structure. */
 struct metal_shmem {
 	const char		*name;
@@ -104,6 +107,8 @@ metal_shmem_to_io_region(struct metal_shmem *shmem)
 {
 	return &shmem->io;
 }
+
+/** @} */
 
 #ifdef __cplusplus
 }

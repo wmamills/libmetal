@@ -40,6 +40,9 @@
 extern "C" {
 #endif
 
+/** \defgroup mutex Mutex Interfaces
+ *  @{ */
+
 /** Opaque libmetal mutex data structure. */
 struct metal_mutex;
 
@@ -70,6 +73,8 @@ static inline void metal_mutex_acquire(struct metal_mutex *mutex);
 static inline void metal_mutex_release(struct metal_mutex *mutex);
 
 #include <metal/system/@PROJECT_SYSTEM@/mutex.h>
+
+/** @} */
 
 #ifdef __cplusplus
 }

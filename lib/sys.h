@@ -46,6 +46,9 @@
 extern "C" {
 #endif
 
+/** \defgroup system Top Level Interfaces
+ *  @{ */
+
 /** Physical address type. */
 typedef unsigned long metal_phys_addr_t;
 
@@ -154,6 +157,8 @@ extern int metal_sys_init(const struct metal_init_params *params);
 extern void metal_sys_finish(void);
 
 #endif
+
+/** @} */
 
 #ifdef __cplusplus
 }

@@ -47,6 +47,9 @@
 extern "C" {
 #endif
 
+/** \defgroup io IO Interfaces
+ *  @{ */
+
 struct metal_io_region;
 
 /** Generic I/O operations. */
