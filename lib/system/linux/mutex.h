@@ -59,7 +59,7 @@ struct metal_mutex {
 static inline int __metal_mutex_cmpxchg(struct metal_mutex *mutex,
 					int exp, int val)
 {
-	atomic_compare_exchange_strong(&mutex->v, &exp, val);
+	atomic_compare_exchange_strong(&mutex->v, (int *)&exp, val);
 	return exp;
 }
 
