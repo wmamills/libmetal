@@ -40,6 +40,9 @@
 
 struct metal_state _metal;
 
+extern int metal_linux_irq_init();
+extern void metal_linux_irq_shutdown();
+
 /** Sort function for page size array. */
 static int metal_pagesize_compare(const void *_a, const void *_b)
 {
@@ -171,11 +174,17 @@ int metal_sys_init(const struct metal_init_params *params)
 
 	metal_unused(params);
 
+	/* Initialize IRQ handling */
+	metal_linux_irq_init();
 	return 0;
 }
 
 void metal_sys_finish(void)
 {
+
+	/* Shutdown IRQ handling */
+	metal_linux_irq_shutdown();
 	metal_linux_bus_finish();
 	close(_metal.pagemap_fd);
+
 }
