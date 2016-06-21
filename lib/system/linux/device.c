@@ -55,6 +55,17 @@ struct linux_driver {
 	void			(*dev_irq_ack)(struct linux_bus *lbus,
 					     struct linux_device *ldev,
 					     int irq);
+	int 			(*dev_dma_map)(struct linux_bus *lbus,
+						struct linux_device *ldev,
+						uint32_t dir,
+						struct metal_sg *sg_in,
+						int nents_in,
+						struct metal_sg *sg_out);
+	void 			(*dev_dma_unmap)(struct linux_bus *lbus,
+						struct linux_device *ldev,
+						uint32_t dir,
+						struct metal_sg *sg,
+						int nents);
 };
 
 struct linux_bus {
@@ -278,6 +289,59 @@ static void metal_uio_dev_irq_ack(struct linux_bus *lbus,
 	(void)write(ldev->fd, &irq_info, sizeof(irq_info));
 }
 
+static int metal_uio_dev_dma_map(struct linux_bus *lbus,
+				 struct linux_device *ldev,
+				 uint32_t dir,
+				 struct metal_sg *sg_in,
+				 int nents_in,
+				 struct metal_sg *sg_out)
+{
+	int i, j;
+	void *vaddr_sg_lo, *vaddr_sg_hi, *vaddr_lo, *vaddr_hi;
+	struct metal_io_region *io;
+
+	(void)lbus;
+	(void)dir;
+
+	/* Check if the the input virt address is MMIO address */
+	for (i = 0; i < nents_in; i++) {
+		vaddr_sg_lo = sg_in[i].virt;
+		vaddr_sg_hi = vaddr_sg_lo + sg_in[i].len;
+		for (j = 0, io = ldev->device.regions;
+		     j < (int)ldev->device.num_regions; j++, io++) {
+			vaddr_lo = io->virt;
+			vaddr_hi = vaddr_lo + io->size;
+			if (vaddr_sg_lo >= vaddr_lo &&
+			    vaddr_sg_hi <= vaddr_hi) {
+				break;
+			}
+		}
+		if (j == (int)ldev->device.num_regions) {
+			metal_log(LOG_WARNING,
+			  "%s,%s: input address isn't MMIO addr: 0x%x,%d.\n",
+			__func__, ldev->dev_name, vaddr_sg_lo, sg_in[i].len);
+			return -EINVAL;
+		}
+	}
+	if (sg_out != sg_in)
+		memcpy(sg_out, sg_in, nents_in*(sizeof(struct metal_sg)));
+	return nents_in;
+}
+
+static void metal_uio_dev_dma_unmap(struct linux_bus *lbus,
+				 struct linux_device *ldev,
+				 uint32_t dir,
+				 struct metal_sg *sg,
+				 int nents)
+{
+	(void) lbus;
+	(void) ldev;
+	(void) dir;
+	(void) sg;
+	(void) nents;
+	return;
+}
+
 static struct linux_bus linux_bus[] = {
 	{
 		.bus_name	= "platform",
@@ -289,6 +353,8 @@ static struct linux_bus linux_bus[] = {
 				.dev_open  = metal_uio_dev_open,
 				.dev_close = metal_uio_dev_close,
 				.dev_irq_ack  = metal_uio_dev_irq_ack,
+				.dev_dma_map = metal_uio_dev_dma_map,
+				.dev_dma_unmap = metal_uio_dev_dma_unmap,
 			},
 			{ 0 /* sentinel */ }
 		}
@@ -307,6 +373,8 @@ static struct linux_bus linux_bus[] = {
 				.dev_open  = metal_uio_dev_open,
 				.dev_close = metal_uio_dev_close,
 				.dev_irq_ack  = metal_uio_dev_irq_ack,
+				.dev_dma_map = metal_uio_dev_dma_map,
+				.dev_dma_unmap = metal_uio_dev_dma_unmap,
 			},
 			{ 0 /* sentinel */ }
 		}
@@ -408,11 +476,40 @@ static void metal_linux_dev_irq_ack(struct metal_bus *bus,
 	return ldev->ldrv->dev_irq_ack(lbus, ldev, irq);
 }
 
+static int metal_linux_dev_dma_map(struct metal_bus *bus,
+			     struct metal_device *device,
+			     uint32_t dir,
+			     struct metal_sg *sg_in,
+			     int nents_in,
+			     struct metal_sg *sg_out)
+{
+	struct linux_device *ldev = to_linux_device(device);
+	struct linux_bus *lbus = to_linux_bus(bus);
+
+	return ldev->ldrv->dev_dma_map(lbus, ldev, dir, sg_in,
+				       nents_in, sg_out);
+}
+
+static void metal_linux_dev_dma_unmap(struct metal_bus *bus,
+			        struct metal_device *device,
+			        uint32_t dir,
+			        struct metal_sg *sg,
+			        int nents)
+{
+	struct linux_device *ldev = to_linux_device(device);
+	struct linux_bus *lbus = to_linux_bus(bus);
+
+	ldev->ldrv->dev_dma_unmap(lbus, ldev, dir, sg,
+				       nents);
+}
+
 static const struct metal_bus_ops metal_linux_bus_ops = {
 	.bus_close	= metal_linux_bus_close,
 	.dev_open	= metal_linux_dev_open,
 	.dev_close	= metal_linux_dev_close,
 	.dev_irq_ack	= metal_linux_dev_irq_ack,
+	.dev_dma_map	= metal_linux_dev_dma_map,
+	.dev_dma_unmap	= metal_linux_dev_dma_unmap,
 };
 
 static int metal_linux_register_bus(struct linux_bus *lbus)
