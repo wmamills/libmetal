@@ -38,6 +38,8 @@
 
 #include <metal/io.h>
 #include <metal/list.h>
+#include <metal/dma.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -64,6 +66,17 @@ struct metal_bus_ops {
 	void		(*dev_irq_ack)(struct metal_bus *bus,
 				     struct metal_device *device,
 				     int irq);
+	int		(*dev_dma_map)(struct metal_bus *bus,
+				       struct metal_device *device,
+				       uint32_t dir,
+				       struct metal_sg *sg_in,
+				       int nents_in,
+				       struct metal_sg *sg_out);
+	void		(*dev_dma_unmap)(struct metal_bus *bus,
+				       struct metal_device *device,
+				       uint32_t dir,
+				       struct metal_sg *sg,
+				       int nents);
 };
 
 /** Libmetal bus structure. */
