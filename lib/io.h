@@ -102,9 +102,8 @@ struct metal_io_region {
  * @param[in]		physmap		Array of physical addresses per page.
  * @param[in]		size		Size of region.
  * @param[in]		page_shift	Log2 of page size (-1 for single page).
- * @param[in]           mem_flags       Memory flags
- * @param[in]		read		Optional read accessor.
- * @param[in]		write		Optional write accessor.
+ * @param[in]		mem_flags	Memory flags
+ * @param[in]		ops			ops
  */
 static inline void
 metal_io_init(struct metal_io_region *io, void *virt,
