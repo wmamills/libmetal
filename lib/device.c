@@ -34,6 +34,8 @@
 #include <metal/log.h>
 #include <metal/sys.h>
 #include <metal/utilities.h>
+#include <metal/dma.h>
+#include <metal/cache.h>
 
 int metal_bus_register(struct metal_bus *bus)
 {
@@ -148,6 +150,45 @@ static int metal_generic_dev_open(struct metal_bus *bus, const char *dev_name,
 	return -ENODEV;
 }
 
+static int metal_generic_dev_dma_map(struct metal_bus *bus,
+			     struct metal_device *device,
+			     uint32_t dir,
+			     struct metal_sg *sg_in,
+			     int nents_in,
+			     struct metal_sg *sg_out)
+{
+	(void)bus;
+	(void)device;
+	int i;
+
+	if (sg_out != sg_in)
+		memcpy(sg_out, sg_in, nents_in*(sizeof(struct metal_sg)));
+	for (i = 0; i < nents_in; i++) {
+		if (dir == METAL_DMA_DEV_W) {
+			metal_cache_flush(sg_out[i].virt, sg_out[i].len);
+		}
+		metal_cache_invalidate(sg_out[i].virt, sg_out[i].len);
+	}
+
+	return nents_in;
+}
+
+void metal_generic_dev_dma_unmap(struct metal_bus *bus,
+		  struct metal_device *device,
+		  uint32_t dir,
+		  struct metal_sg *sg,
+		  int nents)
+{
+	(void)bus;
+	(void)device;
+	(void)dir;
+	int i;
+
+	for (i = 0; i < nents; i++) {
+		metal_cache_invalidate(sg[i].virt, sg[i].len);
+	}
+}
+
 struct metal_bus metal_generic_bus = {
 	.name = "generic",
 	.ops  = {
@@ -155,5 +196,7 @@ struct metal_bus metal_generic_bus = {
 		.dev_open  = metal_generic_dev_open,
 		.dev_close = NULL,
 		.dev_irq_ack = NULL,
+		.dev_dma_map = metal_generic_dev_dma_map,
+		.dev_dma_unmap = metal_generic_dev_dma_unmap,
 	},
 };
