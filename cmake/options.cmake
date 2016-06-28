@@ -36,6 +36,8 @@ if (WITH_TESTS AND (${_host} STREQUAL ${_target}))
   option (WITH_TESTS_EXEC "Run test applications during build" ON)
 endif (WITH_TESTS AND (${_host} STREQUAL ${_target}))
 
+option (WITH_DEFAULT_LOGGER "Build with default logger" ON)
+
 set (PROJECT_EC_FLAGS "-Wall -Werror -Wextra" CACHE STRING "")
 
 # vim: expandtab:ts=2:sw=2:smartindent

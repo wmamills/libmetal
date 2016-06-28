@@ -45,6 +45,10 @@ endforeach (f)
 include_directories (${_inc_dirs})
 add_definitions (-DMETAL_INTERNAL)
 
+if (WITH_DEFAULT_LOGGER)
+  add_definitions (-DDEFAULT_LOGGER_ON)
+endif (WITH_DEFAULT_LOGGER)
+
 # Build a shared library if so configured.
 if (WITH_SHARED_LIB)
   set (_lib ${PROJECT_NAME}-shared)

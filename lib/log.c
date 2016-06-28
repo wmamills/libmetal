@@ -37,6 +37,7 @@
 void metal_default_log_handler(enum metal_log_level level,
 			       const char *format, ...)
 {
+#ifdef DEFAULT_LOGGER_ON
 	char msg[1024];
 	va_list args;
 	static const char *level_strs[] = {
@@ -58,6 +59,7 @@ void metal_default_log_handler(enum metal_log_level level,
 		level = LOG_EMERGENCY;
 
 	fprintf(stderr, "%s%s", level_strs[level], msg);
+#endif
 }
 
 void metal_set_log_handler(metal_log_handler handler)
