@@ -81,6 +81,8 @@ struct metal_device {
 	unsigned		num_regions;
 	struct metal_io_region	regions[METAL_MAX_DEVICE_REGIONS];
 	struct metal_list	node;
+	int                     irq_num;
+	void                    *irq_info;
 };
 
 /**
