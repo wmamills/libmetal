@@ -36,6 +36,7 @@
 #include <metal/device.h>
 #include <metal/sys.h>
 #include <metal/utilities.h>
+#include <metal/irq.h>
 
 #define MAX_DRIVERS	64
 
@@ -158,6 +159,7 @@ static int metal_uio_dev_open(struct linux_bus *lbus, struct linux_device *ldev)
 	struct dlist *dlist;
 	int result, i;
 	void *virt;
+	int irq_info;
 
 
 	ldev->fd = -1;
@@ -226,6 +228,18 @@ static int metal_uio_dev_open(struct linux_bus *lbus, struct linux_device *ldev)
 		}
 	}
 
+	irq_info = 1;
+	if (write(ldev->fd, &irq_info, sizeof(irq_info)) <= 0) {
+		metal_log(LOG_INFO,
+			  "%s: No IRQ for device %s.\n",
+			  __func__, ldev->dev_name);
+		ldev->device.irq_num =  0;
+		ldev->device.irq_info = (void *)-1;
+	} else {
+		ldev->device.irq_num =  1;
+		ldev->device.irq_info = (void *)(intptr_t)ldev->fd;
+	}
+
 	return 0;
 }
 
@@ -233,6 +247,10 @@ static void metal_uio_dev_close(struct linux_bus *lbus,
 				struct linux_device *ldev)
 {
 	(void)lbus;
+
+	if ((intptr_t)ldev->device.irq_info >= 0)
+		metal_irq_register(ldev->fd, NULL, NULL);
+
 	if (ldev->override) {
 		sysfs_write_attribute(ldev->override, "", 1);
 		ldev->override = NULL;
