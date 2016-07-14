@@ -92,7 +92,7 @@ metal_io_init(struct metal_io_region *io, void *virt,
 	      const metal_phys_addr_t *physmap, size_t size,
 	      unsigned page_shift, const struct metal_io_ops *ops)
 {
-	const struct metal_io_ops nops = { };
+	const struct metal_io_ops nops = {NULL, NULL, NULL};
 	io->virt = virt;
 	io->physmap = physmap;
 	io->size = size;
