@@ -102,7 +102,8 @@ int metal_device_open(const char *bus_name, const char *dev_name,
 	if (error)
 		return error;
 
-	metal_list_add_tail(&bus->devices, &(*device)->node);
+	if (bus != &metal_generic_bus)
+		metal_list_add_tail(&bus->devices, &(*device)->node);
 
 	return 0;
 }
@@ -110,7 +111,8 @@ int metal_device_open(const char *bus_name, const char *dev_name,
 void metal_device_close(struct metal_device *device)
 {
 	assert(device && device->bus);
-	metal_list_del(&device->node);
+	if (device->bus != &metal_generic_bus)
+		metal_list_del(&device->node);
 	if (device->bus->ops.dev_close)
 		device->bus->ops.dev_close(device->bus, device);
 }
@@ -132,6 +134,8 @@ static int metal_generic_dev_open(struct metal_bus *bus, const char *dev_name,
 {
 	struct metal_list *node;
 	struct metal_device *dev;
+
+	(void)bus;
 
 	metal_list_for_each(&_metal.common.generic_device_list, node) {
 		dev = metal_container_of(node, struct metal_device, node);
