@@ -65,6 +65,7 @@
 extern "C" {
 #endif
 
+#define METAL_INVALID_VADDR     NULL
 #define MAX_PAGE_SIZES		32
 
 /** Structure of shared page or hugepage sized data. */
