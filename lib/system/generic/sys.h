@@ -55,6 +55,10 @@
 extern "C" {
 #endif
 
+#ifndef METAL_MAX_DEVICE_REGIONS
+#define METAL_MAX_DEVICE_REGIONS 1
+#endif
+
 /** Structure of generic libmetal runtime state. */
 struct metal_state {
 
