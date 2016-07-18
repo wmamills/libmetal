@@ -17,6 +17,7 @@ collect (PROJECT_LIB_HEADERS shmem.h)
 collect (PROJECT_LIB_HEADERS sys.h)
 collect (PROJECT_LIB_HEADERS utilities.h)
 collect (PROJECT_LIB_HEADERS version.h)
+collect (PROJECT_LIB_HEADERS cpu.h)
 
 collect (PROJECT_LIB_SOURCES device.c)
 collect (PROJECT_LIB_SOURCES init.c)
