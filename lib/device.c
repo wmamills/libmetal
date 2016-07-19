@@ -145,6 +145,10 @@ static int metal_generic_dev_open(struct metal_bus *bus, const char *dev_name,
 }
 
 struct metal_bus metal_generic_bus = {
-	.name		= "generic",
-	.ops.dev_open	= metal_generic_dev_open,
+	.name = "generic",
+	.ops  = {
+		.bus_close = NULL,
+		.dev_open  = metal_generic_dev_open,
+		.dev_close = NULL,
+	},
 };
