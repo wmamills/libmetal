@@ -110,8 +110,6 @@ static int metal_shmem_try_map(struct metal_page_size *ps, int fd, size_t size,
 int metal_shmem_open(const char *name, size_t size,
 		     struct metal_io_region **result)
 {
-	const int flags = O_RDWR | O_CREAT | O_CLOEXEC;
-	const int mode = S_IRUSR | S_IWUSR;
 	struct metal_page_size *ps;
 	int fd, error;
 

@@ -154,7 +154,6 @@ static int metal_uio_dev_open(struct linux_bus *lbus, struct linux_device *ldev)
 	char *instance, path[SYSFS_PATH_MAX];
 	struct linux_driver *ldrv = ldev->ldrv;
 	unsigned long *phys, offset, size;
-	struct sysfs_attribute *attr;
 	struct metal_io_region *io;
 	struct dlist *dlist;
 	int result, i;
@@ -404,7 +403,7 @@ static int metal_linux_probe_driver(struct linux_bus *lbus,
 static int metal_linux_probe_bus(struct linux_bus *lbus)
 {
 	struct linux_driver *ldrv;
-	int error = -ENODEV, valid = 0;
+	int error = -ENODEV;
 
 	lbus->sbus = sysfs_open_bus(lbus->bus_name);
 	if (!lbus->sbus)

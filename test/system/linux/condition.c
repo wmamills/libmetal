@@ -41,14 +41,12 @@
 #define THREADS 10
 
 static struct metal_mutex lock = METAL_MUTEX_INIT;
-static struct metal_condition condv = METAL_CONDITION_INIT;
 static struct metal_condition nempty_condv = METAL_CONDITION_INIT;
 static struct metal_condition nfull_condv = METAL_CONDITION_INIT;
 static unsigned int counter;
 
 static void *consumer_thread(void *arg)
 {
-	static int lc = 0;
 	(void)arg;
 	metal_mutex_acquire(&lock);
 	while (!counter)
@@ -62,7 +60,6 @@ static void *consumer_thread(void *arg)
 
 static void *producer_thread(void *arg)
 {
-	static int lc = 0;
 	(void)arg;
 	metal_mutex_acquire(&lock);
 	while (counter == COUNTER_MAX)

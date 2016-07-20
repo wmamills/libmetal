@@ -46,9 +46,9 @@ static void *shmem_child(void *arg)
 	struct metal_io_region *io;
 	unsigned long phys;
 	size_t size = 2 * 1024 * 1024;
-	int error, i, done;
+	int error;
 
-	error = metal_shmem_open(arg, size, &io);
+	error = metal_shmem_open(name, size, &io);
 	assert(!error);
 
 	virt = metal_io_virt(io, 0);
