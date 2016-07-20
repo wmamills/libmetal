@@ -33,6 +33,8 @@
 #include <metal/utilities.h>
 
 void metal_finish_threads(int threads, void *tids);
+int metal_run_noblock(int threads, void *(*child)(void *),
+		     void *arg, void *tids, int *threads_out);
 
 int metal_run(int threads, void *(*child)(void *), void *arg)
 {
