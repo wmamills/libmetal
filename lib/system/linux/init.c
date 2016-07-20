@@ -105,7 +105,7 @@ static int metal_init_page_sizes(void)
 	count = gethugepagesizes(sizes, max_sizes);
 	for (i = 0; i < count; i++) {
 		int shift = metal_log2(sizes[i]);
-		if (shift & MAP_HUGE_MASK != shift)
+		if ((shift & MAP_HUGE_MASK) != shift)
 			continue;
 		metal_add_page_size(hugetlbfs_find_path_for_size(sizes[i]),
 				    shift, (MAP_HUGETLB |
