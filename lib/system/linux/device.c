@@ -232,6 +232,7 @@ static int metal_uio_dev_open(struct linux_bus *lbus, struct linux_device *ldev)
 static void metal_uio_dev_close(struct linux_bus *lbus,
 				struct linux_device *ldev)
 {
+	(void)lbus;
 	if (ldev->override) {
 		sysfs_write_attribute(ldev->override, "", 1);
 		ldev->override = NULL;

@@ -93,8 +93,6 @@ static inline int metal_condition_signal(struct metal_condition *cv)
 
 static inline int metal_condition_broadcast(struct metal_condition *cv)
 {
-	int v = 1;
-
 	if (!cv)
 		return -EINVAL;
 
