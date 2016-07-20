@@ -256,7 +256,7 @@ static struct linux_bus linux_bus[] = {
 				.dev_open  = metal_uio_dev_open,
 				.dev_close = metal_uio_dev_close,
 			},
-			{ /* sentinel */ }
+			{ 0 /* sentinel */ }
 		}
 	},
 	{
@@ -273,10 +273,13 @@ static struct linux_bus linux_bus[] = {
 				.dev_open  = metal_uio_dev_open,
 				.dev_close = metal_uio_dev_close,
 			},
-			{ /* sentinel */ }
+			{ 0 /* sentinel */ }
 		}
 	},
-	{ /* sentinel */ }
+	{
+		/* sentinel */
+		.bus_name = NULL,
+	},
 };
 
 #define for_each_linux_bus(lbus)					\
