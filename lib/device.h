@@ -61,6 +61,9 @@ struct metal_bus_ops {
 				    struct metal_device **device);
 	void		(*dev_close)(struct metal_bus *bus,
 				     struct metal_device *device);
+	void		(*dev_irq_ack)(struct metal_bus *bus,
+				     struct metal_device *device,
+				     int irq);
 };
 
 /** Libmetal bus structure. */

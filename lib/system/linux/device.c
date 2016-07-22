@@ -52,6 +52,9 @@ struct linux_driver {
 					    struct linux_device *ldev);
 	void			(*dev_close)(struct linux_bus *lbus,
 					     struct linux_device *ldev);
+	void			(*dev_irq_ack)(struct linux_bus *lbus,
+					     struct linux_device *ldev,
+					     int irq);
 };
 
 struct linux_bus {
@@ -249,7 +252,7 @@ static void metal_uio_dev_close(struct linux_bus *lbus,
 	(void)lbus;
 
 	if ((intptr_t)ldev->device.irq_info >= 0)
-		metal_irq_register(ldev->fd, NULL, NULL);
+		metal_irq_register(ldev->fd, NULL, NULL, NULL);
 
 	if (ldev->override) {
 		sysfs_write_attribute(ldev->override, "", 1);
@@ -264,6 +267,17 @@ static void metal_uio_dev_close(struct linux_bus *lbus,
 	}
 }
 
+static void metal_uio_dev_irq_ack(struct linux_bus *lbus,
+				 struct linux_device *ldev,
+				 int irq)
+{
+	(void)lbus;
+	(void)irq;
+	unsigned int irq_info = 1;
+
+	(void)write(ldev->fd, &irq_info, sizeof(irq_info));
+}
+
 static struct linux_bus linux_bus[] = {
 	{
 		.bus_name	= "platform",
@@ -274,6 +288,7 @@ static struct linux_bus linux_bus[] = {
 				.cls_name  = "uio",
 				.dev_open  = metal_uio_dev_open,
 				.dev_close = metal_uio_dev_close,
+				.dev_irq_ack  = metal_uio_dev_irq_ack,
 			},
 			{ 0 /* sentinel */ }
 		}
@@ -291,6 +306,7 @@ static struct linux_bus linux_bus[] = {
 				.cls_name  = "uio",
 				.dev_open  = metal_uio_dev_open,
 				.dev_close = metal_uio_dev_close,
+				.dev_irq_ack  = metal_uio_dev_irq_ack,
 			},
 			{ 0 /* sentinel */ }
 		}
@@ -382,10 +398,21 @@ static void metal_linux_bus_close(struct metal_bus *bus)
 	lbus->sbus = NULL;
 }
 
+static void metal_linux_dev_irq_ack(struct metal_bus *bus,
+			     struct metal_device *device,
+			     int irq)
+{
+	struct linux_device *ldev = to_linux_device(device);
+	struct linux_bus *lbus = to_linux_bus(bus);
+
+	return ldev->ldrv->dev_irq_ack(lbus, ldev, irq);
+}
+
 static const struct metal_bus_ops metal_linux_bus_ops = {
 	.bus_close	= metal_linux_bus_close,
 	.dev_open	= metal_linux_dev_open,
 	.dev_close	= metal_linux_dev_close,
+	.dev_irq_ack	= metal_linux_dev_irq_ack,
 };
 
 static int metal_linux_register_bus(struct linux_bus *lbus)

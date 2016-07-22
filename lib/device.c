@@ -154,5 +154,6 @@ struct metal_bus metal_generic_bus = {
 		.bus_close = NULL,
 		.dev_open  = metal_generic_dev_open,
 		.dev_close = NULL,
+		.dev_irq_ack = NULL,
 	},
 };
