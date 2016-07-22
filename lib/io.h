@@ -176,7 +176,9 @@ metal_io_phys(struct metal_io_region *io, unsigned long offset)
 static inline unsigned long
 metal_io_phys_to_offset(struct metal_io_region *io, metal_phys_addr_t phys)
 {
-	unsigned long offset = phys & io->page_mask;
+	unsigned long offset =
+		(io->page_mask == (metal_phys_addr_t)(-1) ?
+		phys - io->physmap[0] :  phys & io->page_mask);
 	do {
 		if (metal_io_phys(io, offset) == phys)
 			return offset;
