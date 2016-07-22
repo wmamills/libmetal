@@ -76,22 +76,22 @@ struct metal_device;
  * @param[in]  drv_id      driver id. It can be used for driver data.
  * @return     0 for success, non-zero on failure
  */
-extern int metal_irq_register(int irq,
-			      metal_irq_handler irq_handler,
-			      struct metal_device *dev,
-			      void *drv_id);
+int metal_irq_register(int irq,
+		       metal_irq_handler irq_handler,
+		       struct metal_device *dev,
+		       void *drv_id);
 
 /**
  * @brief      disable interrupts
  * @return     interrupts state
  */
-extern unsigned int metal_irq_save_disable();
+unsigned int metal_irq_save_disable();
 
 /**
  * @brief      restore interrupts to their previous state
  * @param[in]  flags previous interrupts state
  */
-extern void metal_irq_restore_enable(unsigned flags);
+void metal_irq_restore_enable(unsigned flags);
 
 /** @} */
 

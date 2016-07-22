@@ -35,9 +35,12 @@
  */
 
 #include <stdint.h>
-#include <xil_cache.h>
+#include "xil_cache.h"
 #include <xil_mmu.h>
-#include <metal/io.h>
+#include "metal/io.h"
+#include "xscugic.h"
+#include "xil_exception.h"
+#include "metal/sys.h"
 
 /* Translation table is 16K in size */
 #define     ARM_AR_MEM_TTB_SIZE                    16*1024
@@ -69,6 +72,26 @@
 /* Define all access  (manager access permission / not cachable / not bufferd)  */
 #define     ARM_AR_MEM_TTB_DESC_ALL_ACCESS         (ARM_AR_MEM_TTB_DESC_AP_MANAGER |          \
                                                      ARM_AR_MEM_TTB_DESC_SECT)
+
+
+static unsigned int int_old_val = 0;
+
+void sys_irq_restore_enable(void)
+{
+	Xil_ExceptionEnableMask(int_old_val);
+}
+
+void sys_irq_save_disable(void)
+{
+	unsigned int value = 0;
+
+	value = mfcpsr() & XIL_EXCEPTION_ALL;
+
+	if (value != int_old_val) {
+		Xil_ExceptionDisableMask(XIL_EXCEPTION_ALL);
+		int_old_val = value;
+	}
+}
 
 void metal_machine_cache_flush(void *addr, unsigned int len)
 {

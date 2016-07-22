@@ -29,55 +29,31 @@
  */
 
 /*
- * @file	generic/sys.h
- * @brief	Generic system primitives for libmetal.
+ * @file	generic/zynq7/sys.h
+ * @brief	generic zynq7 system primitives for libmetal.
  */
 
-#ifndef __METAL_SYS__H__
-#error "Include metal/sys.h instead of metal/generic/sys.h"
+#ifndef __METAL_GENERIC_SYS__H__
+#error "Include metal/sys.h instead of metal/generic/@PROJECT_MACHINE@/sys.h"
 #endif
 
-#ifndef __METAL_GENERIC_SYS__H__
-#define __METAL_GENERIC_SYS__H__
+#include "xscugic.h"
 
-#include <errno.h>
-#include <fcntl.h>
-#include <libgen.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-
-#include "./@PROJECT_MACHINE@/sys.h"
+#ifndef __METAL_GENERIC_ZYNQ7_SYS_H__
+#define __METAL_GENERIC_ZYNQ7_SYS_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifndef METAL_MAX_DEVICE_REGIONS
-#define METAL_MAX_DEVICE_REGIONS 1
+
+#if !defined(MAX_IRQS)
+#define MAX_IRQS	((int)XSCUGIC_MAX_NUM_INTR_INPUTS)          /**< maximum number of irqs */
 #endif
 
-/** Structure of generic libmetal runtime state. */
-struct metal_state {
-
-	/** Common (system independent) data. */
-	struct metal_common_state common;
-};
-
-/**
- * @brief restore interrupts to state before disable_global_interrupt()
- */
-void sys_irq_restore_enable(void);
-
-/**
- * @brief disable all interrupts
- */
-void sys_irq_save_disable(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __METAL_GENERIC_SYS__H__ */
+#endif /* __METAL_GENERIC_ZYNQ7_SYS_H__ */

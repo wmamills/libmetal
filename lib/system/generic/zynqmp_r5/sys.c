@@ -34,11 +34,34 @@
  */
 
 #include <stdint.h>
-#include <xil_cache.h>
-#include <xreg_cortexr5.h>
-#include <xil_mmu.h>
-#include <xil_mpu.h>
-#include <metal/io.h>
+#include "xil_cache.h"
+#include "xreg_cortexr5.h"
+#include "xil_mmu.h"
+#include "xil_mpu.h"
+#include "xscugic.h"
+#include "xil_exception.h"
+#include "metal/io.h"
+#include "metal/sys.h"
+
+
+static unsigned int int_old_val = 0;
+
+void sys_irq_restore_enable(void)
+{
+	Xil_ExceptionEnableMask(int_old_val);
+}
+
+void sys_irq_save_disable(void)
+{
+	unsigned int value = 0;
+
+	value = mfcpsr() & XIL_EXCEPTION_ALL;
+
+	if (value != int_old_val) {
+		Xil_ExceptionDisableMask(XIL_EXCEPTION_ALL);
+		int_old_val = value;
+	}
+}
 
 void metal_machine_cache_flush(void *addr, unsigned int len)
 {
