@@ -9,5 +9,6 @@ collect (PROJECT_LIB_SOURCES utilities.c)
 collect (PROJECT_LIB_SOURCES condition.c)
 collect (PROJECT_LIB_SOURCES irq.c)
 collect (PROJECT_LIB_SOURCES alloc.c)
+collect (PROJECT_LIB_SOURCES cache.c)
 
 # vim: expandtab:ts=2:sw=2:smartindent
