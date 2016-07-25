@@ -50,6 +50,23 @@ extern "C" {
 /** \defgroup io IO Interfaces
  *  @{ */
 
+/** I/O memory flags macros for caching scheme */
+
+/** Cache bits */
+#define METAL_CACHE_UNKNOWN  0x0 /** Use cache, unknown cache type */
+#define METAL_UNCACHED       0x1 /** No cache */
+#define METAL_CACHE_WB       0x2 /** Write back */
+#define METAL_CACHE_WT       0x4 /** Write through */
+
+/** Memory types */
+#define METAL_MEM_MAPPED      0x10 /** Memory mapped */
+#define METAL_IO_MAPPED       0x20 /** I/O mapped */
+#define METAL_SHARED_MEM      0x40 /** Shared memory */
+
+/** DMA cache bits */
+#define METAL_DMA_NO_CACHE_OPS 0x0  /** No cache ops in DMA transaction */
+#define METAL_DMA_CACHE_OPS    0x1  /** Require cache ops in DMA transaction */
+
 struct metal_io_region;
 
 /** Generic I/O operations. */
@@ -73,6 +90,7 @@ struct metal_io_region {
 	size_t			size;
 	unsigned long		page_shift;
 	metal_phys_addr_t	page_mask;
+	unsigned int		mem_flags;
 	struct metal_io_ops	ops;
 };
 
