@@ -8,5 +8,6 @@ collect (PROJECT_LIB_SOURCES shmem.c)
 collect (PROJECT_LIB_SOURCES utilities.c)
 collect (PROJECT_LIB_SOURCES condition.c)
 collect (PROJECT_LIB_SOURCES irq.c)
+collect (PROJECT_LIB_SOURCES alloc.c)
 
 # vim: expandtab:ts=2:sw=2:smartindent
