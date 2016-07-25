@@ -335,6 +335,19 @@ metal_io_write(struct metal_io_region *io, unsigned long offset,
 #define metal_io_write64(_io, _ofs, _val)				\
 	metal_io_write((_io), (_ofs), (_val), memory_order_seq_cst, 8)
 
+/**
+ * @brief	libmetal memory map
+ *
+ * This function is to enable memory mapping to the specified I/O memory.
+ *
+ * @param[in]	pa     physical memory start address
+ * @param[in]   io     memory region
+ * @param[in]   size   size of the memory range
+ * @return	logical address if suceeded, or 0 if failed.
+ */
+void *metal_io_mem_map(metal_phys_addr_t pa,
+		     struct metal_io_region *io,
+		     size_t size);
 #ifdef __cplusplus
 }
 #endif

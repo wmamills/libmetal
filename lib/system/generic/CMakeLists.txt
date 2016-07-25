@@ -7,6 +7,7 @@ collect (PROJECT_LIB_SOURCES shmem.c)
 collect (PROJECT_LIB_SOURCES condition.c)
 collect (PROJECT_LIB_SOURCES alloc.c)
 collect (PROJECT_LIB_SOURCES cache.c)
+collect (PROJECT_LIB_SOURCES io.c)
 
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_MACHINE})
   add_subdirectory(${PROJECT_MACHINE})
