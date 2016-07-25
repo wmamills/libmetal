@@ -101,7 +101,7 @@ static int metal_shmem_try_map(struct metal_page_size *ps, int fd, size_t size,
 			phys[page] = METAL_BAD_OFFSET;
 	}
 
-	metal_io_init(io, mem, phys, size, ps->page_shift, &metal_shmem_io_ops);
+	metal_io_init(io, mem, phys, size, ps->page_shift, 0, &metal_shmem_io_ops);
 	*result = io;
 
 	return 0;

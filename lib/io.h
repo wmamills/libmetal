@@ -102,13 +102,15 @@ struct metal_io_region {
  * @param[in]		physmap		Array of physical addresses per page.
  * @param[in]		size		Size of region.
  * @param[in]		page_shift	Log2 of page size (-1 for single page).
+ * @param[in]           mem_flags       Memory flags
  * @param[in]		read		Optional read accessor.
  * @param[in]		write		Optional write accessor.
  */
 static inline void
 metal_io_init(struct metal_io_region *io, void *virt,
 	      const metal_phys_addr_t *physmap, size_t size,
-	      unsigned page_shift, const struct metal_io_ops *ops)
+	      unsigned page_shift, unsigned int mem_flags,
+	      const struct metal_io_ops *ops)
 {
 	const struct metal_io_ops nops = {NULL, NULL, NULL};
 	io->virt = virt;
@@ -116,6 +118,7 @@ metal_io_init(struct metal_io_region *io, void *virt,
 	io->size = size;
 	io->page_shift = page_shift;
 	io->page_mask = (1UL << page_shift) - 1UL;
+	io->mem_flags = mem_flags;
 	io->ops = ops ? *ops : nops;
 }
 
