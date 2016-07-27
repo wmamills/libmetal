@@ -59,6 +59,9 @@ void metal_default_log_handler(enum metal_log_level level,
 		level = LOG_EMERGENCY;
 
 	fprintf(stderr, "%s%s", level_strs[level], msg);
+#else
+	(void)level;
+	(void)format;
 #endif
 }
 
