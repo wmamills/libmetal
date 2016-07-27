@@ -34,12 +34,16 @@
  */
 
 #include <metal/condition.h>
+#include <metal/irq.h>
+
+extern void metal_generic_default_poll(void);
 
 int metal_condition_wait(struct metal_condition *cv,
 			 struct metal_mutex *m)
 {
 	struct metal_mutex *tmpm = 0;
 	int v;
+	unsigned int flags;
 
 	/* Check if the mutex has been acquired */
 	if (!cv || !m || !metal_mutex_is_acquired(m))
@@ -54,7 +58,15 @@ int metal_condition_wait(struct metal_condition *cv,
 
 	/* Release the mutex first. */
 	metal_mutex_release(m);
-	while (atomic_load(&cv->v) == v);
+	do {
+		flags = metal_irq_save_disable();
+		if (atomic_load(&cv->v) != v) {
+			metal_irq_restore_enable(flags);
+			break;
+		}
+		metal_generic_default_poll();
+		metal_irq_restore_enable(flags);
+	} while(1);
 	/* Acquire the mutex again. */
 	metal_mutex_acquire(m);
 	return 0;
