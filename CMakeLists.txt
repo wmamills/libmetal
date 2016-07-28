@@ -23,7 +23,10 @@ add_subdirectory (lib)
 if (WITH_TESTS)
   add_subdirectory (test)
 endif (WITH_TESTS)
-add_subdirectory (doc)
+
+if (WITH_DOC)
+  add_subdirectory (doc)
+endif (WITH_DOC)
 
 
 # vim: expandtab:ts=2:sw=2:smartindent
