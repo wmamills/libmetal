@@ -1,3 +1,4 @@
+collect (PROJECT_LIB_TESTS main.c)
 collect (PROJECT_LIB_TESTS alloc.c)
 collect (PROJECT_LIB_TESTS irq.c)
 

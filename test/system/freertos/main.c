@@ -28,56 +28,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "metal/sys.h"
-#include "metal/utilities.h"
 #include "metal-test.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
-int metal_run(int threads, metal_thread_t child, void *arg)
+static void run_tests(void *param)
 {
-	pthread_t tids[threads];
-	int error, ts_created;
+	(void)param;
 
-	error = metal_run_noblock(threads, child, arg, tids, &ts_created);
-
-	metal_finish_threads(ts_created, (void *)tids);
-
-	return error;
+	(void)metal_tests_run();
+	 vTaskDelete(NULL);
 }
 
-int metal_run_noblock(int threads, metal_thread_t child,
-		     void *arg, void *tids, int *threads_out)
+int main(void)
 {
-	int error, i;
-	pthread_t *tid_p = (pthread_t *)tids;
+	BaseType_t stat;
 
-	if (!tids) {
-		metal_log(LOG_ERROR, "invalid arguement, tids is NULL.\n");
-		return -EINVAL;
+	stat = xTaskCreate(run_tests, "run_tests", 256, NULL, 2, NULL);
+	if (stat != pdPASS) {
+		metal_log(LOG_ERROR, "failed to create run_tests thread\n");
+	} else {
+		/* Start running FreeRTOS tasks */
+		vTaskStartScheduler();
 	}
 
-	for (i = 0; i < threads; i++) {
-		error = -pthread_create(&tid_p[i], NULL, child, arg);
-		if (error) {
-			metal_log(LOG_ERROR, "failed to create thread - %s\n",
-				  strerror(error));
-			break;
-		}
+	/* Will not get here, unless a call is made to vTaskEndScheduler() */
+	while (1) {
+		__asm__("wfi\n\t");
 	}
 
-	*threads_out = i;
-	return error;
-}
-
-void metal_finish_threads(int threads, void *tids)
-{
-	int i;
-	pthread_t *tid_p = (pthread_t *)tids;
-
-	if (!tids) {
-		metal_log(LOG_ERROR, "invalid argument, tids is NULL.\n");
-		return;
-	}
-
-	for (i = 0; i < threads; i++)
-		(void)pthread_join(tid_p[i], NULL);
+	/* suppress compilation warnings*/
+	return 0;
 }
