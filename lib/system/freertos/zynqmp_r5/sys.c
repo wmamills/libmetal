@@ -29,50 +29,33 @@
  */
 
 /*
- * @file	freertos/sys.h
- * @brief	FreeRTOS system primitives for libmetal.
+ * @file	freertos/sys.c
+ * @brief	machine specific system primitives implementation.
  */
 
-#ifndef __METAL_SYS__H__
-#error "Include metal/sys.h instead of metal/freertos/sys.h"
-#endif
+#include <stdint.h>
+#include "xreg_cortexr5.h"
+#include "xscugic.h"
+#include "xil_exception.h"
+#include "metal/sys.h"
 
-#ifndef __METAL_FREERTOS_SYS__H__
-#define __METAL_FREERTOS_SYS__H__
 
-#include "./@PROJECT_MACHINE@/sys.h"
+static unsigned int int_old_val = 0;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifndef METAL_MAX_DEVICE_REGIONS
-#define METAL_MAX_DEVICE_REGIONS 1
-#endif
-
-/** Structure for FreeRTOS libmetal runtime state. */
-struct metal_state {
-
-	/** Common (system independent) data. */
-	struct metal_common_state common;
-};
-
-#ifdef METAL_INTERNAL
-
-/**
- * @brief restore interrupts to state before disable_global_interrupt()
- */
-void sys_irq_restore_enable(void);
-
-/**
- * @brief disable all interrupts
- */
-void sys_irq_save_disable(void);
-
-#endif /* METAL_INTERNAL */
-
-#ifdef __cplusplus
+void sys_irq_restore_enable(void)
+{
+	Xil_ExceptionEnableMask(int_old_val);
 }
-#endif
 
-#endif /* __METAL_FREERTOS_SYS__H__ */
+void sys_irq_save_disable(void)
+{
+	unsigned int value = 0;
+
+	value = mfcpsr() & XIL_EXCEPTION_ALL;
+
+	if (value != int_old_val) {
+		Xil_ExceptionDisableMask(XIL_EXCEPTION_ALL);
+		int_old_val = value;
+	}
+}
+

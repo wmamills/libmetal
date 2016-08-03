@@ -29,50 +29,31 @@
  */
 
 /*
- * @file	freertos/sys.h
- * @brief	FreeRTOS system primitives for libmetal.
+ * @file	freertos/zynq7/sys.h
+ * @brief	freertos zynq7 system primitives for libmetal.
  */
 
-#ifndef __METAL_SYS__H__
-#error "Include metal/sys.h instead of metal/freertos/sys.h"
+#ifndef __METAL_FREERTOS_SYS__H__
+#error "Include metal/sys.h instead of metal/freertos/@PROJECT_MACHINE@/sys.h"
 #endif
 
-#ifndef __METAL_FREERTOS_SYS__H__
-#define __METAL_FREERTOS_SYS__H__
+#include "xscugic.h"
 
-#include "./@PROJECT_MACHINE@/sys.h"
+#ifndef __METAL_FREERTOS_ZYNQ7_SYS__H__
+#define __METAL_FREERTOS_ZYNQ7_SYS__H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifndef METAL_MAX_DEVICE_REGIONS
-#define METAL_MAX_DEVICE_REGIONS 1
+
+#if !defined(MAX_IRQS)
+#define MAX_IRQS	((int)XSCUGIC_MAX_NUM_INTR_INPUTS)          /**< maximum number of irqs */
 #endif
 
-/** Structure for FreeRTOS libmetal runtime state. */
-struct metal_state {
-
-	/** Common (system independent) data. */
-	struct metal_common_state common;
-};
-
-#ifdef METAL_INTERNAL
-
-/**
- * @brief restore interrupts to state before disable_global_interrupt()
- */
-void sys_irq_restore_enable(void);
-
-/**
- * @brief disable all interrupts
- */
-void sys_irq_save_disable(void);
-
-#endif /* METAL_INTERNAL */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __METAL_FREERTOS_SYS__H__ */
+#endif /* __METAL_FREERTOS_ZYNQ7_SYS__H__ */
