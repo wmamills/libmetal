@@ -1,4 +1,5 @@
 collect (PROJECT_LIB_HEADERS sys.h)
+collect (PROJECT_LIB_HEADERS alloc.h)
 
 collect (PROJECT_LIB_SOURCES init.c)
 
