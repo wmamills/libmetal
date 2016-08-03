@@ -29,79 +29,20 @@
  */
 
 /*
- * @file	freertos/sys.c
- * @brief	machine specific system primitives implementation.
+ * @file	freertos/io.c
+ * @brief	FreeRTOS libmetal I/O handling.
  */
 
-#include <stdint.h>
-#include "xil_cache.h"
-#include "xreg_cortexr5.h"
-#include "xil_mmu.h"
-#include "xil_mpu.h"
-#include "xscugic.h"
-#include "xil_exception.h"
 #include "metal/io.h"
-#include "metal/sys.h"
 
+extern void metal_machine_io_mem_map(metal_phys_addr_t pa,
+				      size_t size, unsigned int flags);
 
-static unsigned int int_old_val = 0;
-
-void sys_irq_restore_enable(void)
+void *metal_io_mem_map(metal_phys_addr_t pa,
+		       struct metal_io_region *io, size_t size)
 {
-	Xil_ExceptionEnableMask(int_old_val);
+	unsigned int flags = io->mem_flags;
+	metal_machine_io_mem_map(pa, size, flags);
+	return metal_io_phys_to_virt(io, pa);
 }
 
-void sys_irq_save_disable(void)
-{
-	unsigned int value = 0;
-
-	value = mfcpsr() & XIL_EXCEPTION_ALL;
-
-	if (value != int_old_val) {
-		Xil_ExceptionDisableMask(XIL_EXCEPTION_ALL);
-		int_old_val = value;
-	}
-}
-
-void metal_machine_cache_flush(void *addr, unsigned int len)
-{
-	if (!addr & !len)
-		Xil_DCacheFlush();
-	else
-		Xil_DCacheFlushRange((intptr_t)addr, len);
-}
-
-void metal_machine_cache_invalidate(void *addr, unsigned int len)
-{
-	if (!addr & !len)
-		Xil_DCacheInvalidate();
-	else
-		Xil_DCacheInvalidateRange((intptr_t)addr, len);
-}
-
-void metal_machine_io_mem_map(metal_phys_addr_t pa,
-			       size_t size, unsigned int flags)
-{
-	unsigned int r5_flags;
-
-	/* Assume DEVICE_SHARED if nothing indicates this is memory.  */
-	r5_flags = DEVICE_SHARED;
-	if ((flags & METAL_SHARED_MEM)) {
-		r5_flags = NORM_SHARED_NCACHE;
-		if ((flags & METAL_CACHE_WB)) {
-			r5_flags = NORM_SHARED_WB_WA;
-		} else if ((flags & METAL_CACHE_WT)) {
-			r5_flags = NORM_SHARED_WT_NWA;
-		}
-	} else {
-		r5_flags = NORM_NSHARED_NCACHE;
-		if ((flags & METAL_CACHE_WB)) {
-			r5_flags = NORM_NSHARED_WB_WA;
-		} else if ((flags & METAL_CACHE_WT)) {
-			r5_flags = NORM_NSHARED_WT_NWA;
-		}
-	}
-
-	Xil_SetMPURegion(pa, size, r5_flags | PRIV_RW_USER_RW);
-	return;
-}

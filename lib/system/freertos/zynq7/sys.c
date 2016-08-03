@@ -37,6 +37,7 @@
 #include <stdint.h>
 #include "xil_cache.h"
 #include "xil_mmu.h"
+#include "metal/io.h"
 #include "xscugic.h"
 #include "xil_exception.h"
 #include "metal/sys.h"
@@ -108,3 +109,47 @@ void metal_machine_cache_invalidate(void *addr, unsigned int len)
 		Xil_DCacheInvalidateRange((intptr_t)addr, len);
 }
 
+void metal_machine_io_mem_map(metal_phys_addr_t pa,
+				      size_t size, unsigned int flags)
+{
+	unsigned int section_offset;
+	unsigned int ttb_addr;
+	unsigned int ttb_value;
+
+	/* Ensure the virtual and physical addresses are aligned on a
+	   section boundary */
+	pa &= ARM_AR_MEM_TTB_SECT_SIZE_MASK;
+	ttb_value = ARM_AR_MEM_TTB_DESC_ALL_ACCESS;
+
+	/* Loop through entire region of memory (one MMU section at a time).
+	   Each section requires a TTB entry. */
+	for (section_offset = 0; section_offset < size;
+	     section_offset += ARM_AR_MEM_TTB_SECT_SIZE) {
+
+		/* Calculate translation table entry for this memory section */
+		ttb_addr = (pa + section_offset);
+
+		/* Build translation table entry value */
+
+		/* Set cache related bits in translation table entry.
+		   NOTE: Default is uncached instruction and data. */
+		if ((flags & METAL_CACHE_WB)) {
+			/* Update translation table entry value */
+			ttb_value |=
+			    (ARM_AR_MEM_TTB_DESC_B |
+			     ARM_AR_MEM_TTB_DESC_C);
+		} else if ((flags & METAL_CACHE_WT)) {
+			/* Update translation table entry value */
+			ttb_value |= ARM_AR_MEM_TTB_DESC_C;
+		}
+		/* In case of un-cached memory, set TEX 0 bit to set memory
+		   attribute to normal. */
+		else if ((flags & METAL_UNCACHED)) {
+			ttb_value |= ARM_AR_MEM_TTB_DESC_TEX;
+		}
+
+		/* Write translation table entry value to entry address */
+		Xil_SetTlbAttributes(ttb_addr, ttb_value);
+
+	}
+}
