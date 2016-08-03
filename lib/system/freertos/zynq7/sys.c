@@ -35,6 +35,8 @@
  */
 
 #include <stdint.h>
+#include "xil_cache.h"
+#include "xil_mmu.h"
 #include "xscugic.h"
 #include "xil_exception.h"
 #include "metal/sys.h"
@@ -88,5 +90,21 @@ void sys_irq_save_disable(void)
 		Xil_ExceptionDisableMask(XIL_EXCEPTION_ALL);
 		int_old_val = value;
 	}
+}
+
+void metal_machine_cache_flush(void *addr, unsigned int len)
+{
+	if (!addr & !len)
+		Xil_DCacheFlush();
+	else
+		Xil_DCacheFlushRange((intptr_t)addr, len);
+}
+
+void metal_machine_cache_invalidate(void *addr, unsigned int len)
+{
+	if (!addr & !len)
+		Xil_DCacheInvalidate();
+	else
+		Xil_DCacheInvalidateRange((intptr_t)addr, len);
 }
 

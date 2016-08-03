@@ -29,51 +29,21 @@
  */
 
 /*
- * @file	freertos/sys.c
- * @brief	machine specific system primitives implementation.
+ * @file	freertos/cache.c
+ * @brief	freertos libmetal cache handling.
  */
 
-#include <stdint.h>
-#include "xil_cache.h"
-#include "xreg_cortexr5.h"
-#include "xil_mmu.h"
-#include "xil_mpu.h"
-#include "xscugic.h"
-#include "xil_exception.h"
-#include "metal/sys.h"
+#include "metal/cache.h"
 
+extern void metal_machine_cache_flush(void *addr, unsigned int len);
+extern void metal_machine_cache_invalidate(void *addr, unsigned int len);
 
-static unsigned int int_old_val = 0;
-
-void sys_irq_restore_enable(void)
+void metal_cache_flush(void *addr, unsigned int len)
 {
-	Xil_ExceptionEnableMask(int_old_val);
+	metal_machine_cache_flush(addr, len);
 }
 
-void sys_irq_save_disable(void)
+void metal_cache_invalidate(void *addr, unsigned int len)
 {
-	unsigned int value = 0;
-
-	value = mfcpsr() & XIL_EXCEPTION_ALL;
-
-	if (value != int_old_val) {
-		Xil_ExceptionDisableMask(XIL_EXCEPTION_ALL);
-		int_old_val = value;
-	}
-}
-
-void metal_machine_cache_flush(void *addr, unsigned int len)
-{
-	if (!addr & !len)
-		Xil_DCacheFlush();
-	else
-		Xil_DCacheFlushRange((intptr_t)addr, len);
-}
-
-void metal_machine_cache_invalidate(void *addr, unsigned int len)
-{
-	if (!addr & !len)
-		Xil_DCacheInvalidate();
-	else
-		Xil_DCacheInvalidateRange((intptr_t)addr, len);
+	metal_machine_cache_invalidate(addr, len);
 }
