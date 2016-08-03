@@ -36,8 +36,8 @@
 #ifndef __METAL_CONDITION__H__
 #define __METAL_CONDITION__H__
 
-#include <metal/mutex.h>
-#include <metal/utilities.h>
+#include "metal/mutex.h"
+#include "metal/utilities.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -87,7 +87,7 @@ static inline int metal_condition_broadcast(struct metal_condition *cv);
 int metal_condition_wait(struct metal_condition *cv,
 				       struct metal_mutex *m);
 
-#include <metal/system/@PROJECT_SYSTEM@/condition.h>
+#include "metal/system/@PROJECT_SYSTEM@/condition.h"
 
 /** @} */
 

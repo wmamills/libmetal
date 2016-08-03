@@ -79,7 +79,7 @@ static inline void metal_mutex_release(struct metal_mutex *mutex);
  */
 static inline int metal_mutex_is_acquired(struct metal_mutex *mutex);
 
-#include <metal/system/@PROJECT_SYSTEM@/mutex.h>
+#include "metal/system/@PROJECT_SYSTEM@/mutex.h"
 
 /** @} */
 

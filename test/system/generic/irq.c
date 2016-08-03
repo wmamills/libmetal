@@ -30,10 +30,10 @@
 
 #include <stdlib.h>
 
-#include <metal-test.h>
-#include <metal/irq.h>
-#include <metal/log.h>
-#include <metal/sys.h>
+#include "metal-test.h"
+#include "metal/irq.h"
+#include "metal/log.h"
+#include "metal/sys.h"
 
 #define MAX_HDS  10
 

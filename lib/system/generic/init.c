@@ -33,8 +33,8 @@
  * @brief	Generic libmetal initialization.
  */
 
-#include <metal/sys.h>
-#include <metal/utilities.h>
+#include "metal/sys.h"
+#include "metal/utilities.h"
 
 struct metal_state _metal;
 

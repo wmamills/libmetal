@@ -40,8 +40,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include <metal/atomic.h>
-#include <metal/sys.h>
+#include "metal/atomic.h"
+#include "metal/sys.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -28,11 +28,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <metal-test.h>
-#include <metal/log.h>
-#include <metal/mutex.h>
-#include <metal/shmem.h>
-#include <metal/sys.h>
+#include "metal-test.h"
+#include "metal/log.h"
+#include "metal/mutex.h"
+#include "metal/shmem.h"
+#include "metal/sys.h"
 
 static const int shmem_threads = 10;
 static const int shmem_count = 10;

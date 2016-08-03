@@ -30,10 +30,10 @@
 
 #include <pthread.h>
 
-#include <metal-test.h>
-#include <metal/log.h>
-#include <metal/sys.h>
-#include <metal/mutex.h>
+#include "metal-test.h"
+#include "metal/log.h"
+#include "metal/sys.h"
+#include "metal/mutex.h"
 
 static const int mutex_test_count = 1000;
 

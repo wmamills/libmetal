@@ -35,10 +35,10 @@
 
 #include <pthread.h>
 #include <sched.h>
-#include <metal/device.h>
-#include <metal/irq.h>
-#include <metal/sys.h>
-#include <metal/mutex.h>
+#include "metal/device.h"
+#include "metal/irq.h"
+#include "metal/sys.h"
+#include "metal/mutex.h"
 #include <sys/time.h>
 #include <sys/eventfd.h>
 #include <stdint.h>
