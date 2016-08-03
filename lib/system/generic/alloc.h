@@ -33,12 +33,12 @@
  * @brief	generic libmetal memory allocattion definitions.
  */
 
-#ifndef __METAL_ALLOC_H__
+#ifndef __METAL_ALLOC__H__
 #error "Include metal/alloc.h instead of metal/generic/alloc.h"
 #endif
 
-#ifndef __METAL_GENERIC_ALLOC_H__
-#define __METAL_GENERIC_ALLOC_H__
+#ifndef __METAL_GENERIC_ALLOC__H__
+#define __METAL_GENERIC_ALLOC__H__
 
 #include <stdlib.h>
 
@@ -57,4 +57,4 @@ static inline void metal_free_memory(void *ptr)
 }
 #endif
 
-#endif /* __METAL_GENERIC_ALLOC_H__ */
+#endif /* __METAL_GENERIC_ALLOC__H__ */

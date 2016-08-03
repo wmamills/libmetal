@@ -33,8 +33,8 @@
  * @brief	Memory allocation handling primitives for libmetal.
  */
 
-#ifndef __METAL_ALLOC_H__
-#define __METAL_ALLOC_H__
+#ifndef __METAL_ALLOC__H__
+#define __METAL_ALLOC__H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,4 +67,4 @@ static inline void metal_free_memory(void *ptr);
 }
 #endif
 
-#endif /* __METAL_ALLOC_H__ */
+#endif /* __METAL_ALLOC__H__ */

@@ -39,8 +39,8 @@
 
 #include "xscugic.h"
 
-#ifndef __METAL_GENERIC_ZYNQ7_SYS_H__
-#define __METAL_GENERIC_ZYNQ7_SYS_H__
+#ifndef __METAL_GENERIC_ZYNQ7_SYS__H__
+#define __METAL_GENERIC_ZYNQ7_SYS__H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,4 +56,4 @@ extern "C" {
 }
 #endif
 
-#endif /* __METAL_GENERIC_ZYNQ7_SYS_H__ */
+#endif /* __METAL_GENERIC_ZYNQ7_SYS__H__ */
