@@ -161,6 +161,16 @@ void metal_irq_restore_enable(unsigned int flags)
 	}
 }
 
+void metal_irq_enable(unsigned int vector)
+{
+        sys_irq_enable(vector);
+}
+
+void metal_irq_disable(unsigned int vector)
+{
+        sys_irq_disable(vector);
+}
+
 /**
  * @brief default handler
  */
