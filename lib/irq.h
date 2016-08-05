@@ -93,6 +93,24 @@ unsigned int metal_irq_save_disable();
  */
 void metal_irq_restore_enable(unsigned flags);
 
+/**
+ * @brief	metal_irq_enable
+ *
+ * Enables the given interrupt
+ *
+ * @param vector   - interrupt vector number
+ */
+void metal_irq_enable(unsigned int vector);
+
+/**
+ * @brief	metal_irq_disable
+ *
+ * Disables the given interrupt
+ *
+ * @param vector   - interrupt vector number
+ */
+void metal_irq_disable(unsigned int vector);
+
 /** @} */
 
 #ifdef __cplusplus
