@@ -39,7 +39,7 @@ static const int mutex_test_count = 1000;
 
 static void *mutex_thread(void *arg)
 {
-	struct metal_mutex *l = arg;
+	metal_mutex_t *l = arg;
 	int i;
 
 	for (i = 0; i < mutex_test_count; i++) {
@@ -53,9 +53,16 @@ static void *mutex_thread(void *arg)
 
 static int mutex(void)
 {
-	struct metal_mutex lock = METAL_MUTEX_INIT;
+	metal_mutex_t lock = METAL_MUTEX_INIT;
 	const int threads = 10;
+	int rc;
 
-	return metal_run(threads, mutex_thread, &lock);
+	metal_mutex_init(&lock);
+
+	rc = metal_run(threads, mutex_thread, &lock);
+
+	metal_mutex_deinit(&lock);
+
+	return rc;
 }
 METAL_ADD_TEST(mutex);
