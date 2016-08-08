@@ -40,7 +40,7 @@ static void *shmem_child(void *arg)
 {
 	const char *name = arg;
 	struct {
-		struct metal_mutex	mutex;
+		metal_mutex_t	mutex;
 		int			counter;
 	} *virt;
 	struct metal_io_region *io;
