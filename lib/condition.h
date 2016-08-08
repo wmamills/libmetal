@@ -84,8 +84,7 @@ static inline int metal_condition_broadcast(struct metal_condition *cv);
  * @return	 0 on success, non-zero on failure.
  * @see metal_condition_signal
  */
-int metal_condition_wait(struct metal_condition *cv,
-				       struct metal_mutex *m);
+int metal_condition_wait(struct metal_condition *cv, metal_mutex_t *m);
 
 #include "metal/system/@PROJECT_SYSTEM@/condition.h"
 
