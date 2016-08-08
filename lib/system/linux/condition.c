@@ -36,9 +36,9 @@
 #include "metal/condition.h"
 
 int metal_condition_wait(struct metal_condition *cv,
-				       struct metal_mutex *m)
+				       metal_mutex_t *m)
 {
-	struct metal_mutex *tmpm = 0;
+	metal_mutex_t *tmpm = 0;
 	int v = 0;
 
 	/* Check if the mutex has been acquired */
