@@ -40,7 +40,7 @@
 
 #define THREADS 10
 
-static struct metal_mutex lock = METAL_MUTEX_INIT;
+static metal_mutex_t lock = METAL_MUTEX_INIT;
 static struct metal_condition nempty_condv = METAL_CONDITION_INIT;
 static struct metal_condition nfull_condv = METAL_CONDITION_INIT;
 static unsigned int counter;
