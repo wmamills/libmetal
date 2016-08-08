@@ -1,6 +1,7 @@
 collect (PROJECT_LIB_HEADERS sys.h)
 collect (PROJECT_LIB_HEADERS alloc.h)
 collect (PROJECT_LIB_HEADERS irq.h)
+collect (PROJECT_LIB_HEADERS mutex.h)
 
 collect (PROJECT_LIB_SOURCES init.c)
 collect (PROJECT_LIB_SOURCES irq.c)
