@@ -71,7 +71,7 @@ struct metal_irqs_state {
 	int   irq_reg_fd; /**< irqs registration notification file
 	                    descriptor */
 
-	struct metal_mutex irq_lock; /**< irq handling lock */
+	metal_mutex_t irq_lock; /**< irq handling lock */
 
 	unsigned int irq_state; /**< global irq handling state */
 
