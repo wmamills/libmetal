@@ -29,6 +29,7 @@
  */
 
 #include <stdlib.h>
+#include <errno.h>
 
 #include "metal-test.h"
 #include "metal/irq.h"
@@ -73,7 +74,7 @@ static int irq(void)
 
 			metal_set_log_level(mll);
 			metal_log(LOG_DEBUG, "register irq %d fail hd %d\n", i, j);
-			return rc;
+			return rc ? rc : -EINVAL;
 		}
 	}
 
