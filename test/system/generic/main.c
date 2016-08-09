@@ -30,11 +30,17 @@
 
 #include "metal-test.h"
 
+extern int init_system(void);
+
 int main(void)
 {
-	int status;
+	(void)init_system();
+	(void)metal_tests_run();
 
-	status = metal_tests_run();
+	while (1) {
+		__asm__("wfi\n\t");
+	}   
 
-	return status;
+	/* will not return, but quiet the compiler */
+	return 0;
 }
