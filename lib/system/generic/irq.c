@@ -37,7 +37,7 @@
 #include "metal/irq.h"
 #include "metal/sys.h"
 #include "metal/log.h"
-
+#include "metal/mutex.h"
 
 
 #define MAX_HDS            10           /**< maximum number of
@@ -54,6 +54,7 @@ struct metal_irqs_state {
                                                            handlers
                                                            descriptors */
         unsigned int intr_enable;
+        metal_mutex_t irq_lock;
 };
 
 static struct metal_irqs_state _irqs;
@@ -64,7 +65,7 @@ int metal_irq_register(int irq,
                        struct metal_device *dev,
                        void *drv_id)
 {
-        unsigned int irq_flags_save;
+	unsigned int irq_flags_save;
 	struct metal_irq_hddesc *hd_desc;
 	int j,i = 0;
 
@@ -86,12 +87,14 @@ int metal_irq_register(int irq,
 		return -EINVAL;
 	}
 
+	metal_mutex_acquire(&_irqs.irq_lock);
 	while (i < MAX_HDS) {
 		hd_desc = &_irqs.hds[irq][i];
 		if ((hd_desc->drv_id == drv_id) || (!drv_id && !hd)) {
 			if (hd) {
 				metal_log(LOG_ERROR, "%s: irq %d has already registered."
 						"Will not register again.\n", __func__, irq);
+				metal_mutex_release(&_irqs.irq_lock);
 				return -EINVAL;
 			} else {
 				/* we are at end of registered hds */
@@ -125,10 +128,13 @@ int metal_irq_register(int irq,
 			break;
 		} else if (!hd_desc->drv_id) {
 			metal_log(LOG_ERROR, "%s: irq %d drv id not found.\n", __func__, irq);
+			metal_mutex_release(&_irqs.irq_lock);
 			return -EINVAL;
 		}
 		i++;
 	}
+	metal_mutex_release(&_irqs.irq_lock);
+
 	if (i >= MAX_HDS) {
 		metal_log(LOG_ERROR, "%s: exceed maximum handlers per IRQ.\n",
 				__func__);
@@ -185,6 +191,17 @@ void metal_irq_isr(unsigned int vector)
         	if (!hd) break;
         	hd(vector, _irqs.hds[vector][j].drv_id);
         }
-
 }
 
+int metal_irq_init(void)
+{
+       /* memset(&_irqs, 0, sizeof(_irqs)); */
+
+       metal_mutex_init(&_irqs.irq_lock);
+       return 0;
+}
+
+void metal_irq_deinit(void) 
+{
+       metal_mutex_deinit(&_irqs.irq_lock);
+}
