@@ -174,16 +174,16 @@ void metal_irq_disable(unsigned int vector)
 /**
  * @brief default handler
  */
-void metal_irq_bm_isr(int irq)
+void metal_irq_isr(unsigned int vector)
 {
         metal_irq_handler  hd; /**< irq handler */
         int j;
 
         for(j = 0; j < MAX_HDS; j++) {
-        	hd = _irqs.hds[irq][j].hd;
+        	hd = _irqs.hds[vector][j].hd;
         	/* there are no hole in the hds */
         	if (!hd) break;
-        	hd(irq, _irqs.hds[irq][j].drv_id);
+        	hd(vector, _irqs.hds[vector][j].drv_id);
         }
 
 }
