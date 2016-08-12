@@ -341,4 +341,5 @@ void metal_linux_irq_shutdown()
 		metal_log(LOG_ERROR, "Failed to join IRQ thread: %d.\n", ret);
 	}
 	close(_irqs.irq_reg_fd);
+	metal_mutex_deinit(&_irqs.irq_lock);
 }
