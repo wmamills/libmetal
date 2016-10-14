@@ -147,6 +147,8 @@ After calling DMA unmap, the cpu will own the memory.
 For Linux userspace, it only supports to use UIO device memory as DMA
 memory for this release.
 
+### Time
+libmetal time APIs provide getting timestamp implementation.
 
 ### Compiler
 
