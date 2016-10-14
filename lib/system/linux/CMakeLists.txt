@@ -13,5 +13,6 @@ collect (PROJECT_LIB_SOURCES irq.c)
 collect (PROJECT_LIB_SOURCES cache.c)
 collect (PROJECT_LIB_SOURCES io.c)
 collect (PROJECT_LIB_SOURCES time.c)
+collect (PROJECT_LIB_SOURCES sleep.c)
 
 # vim: expandtab:ts=2:sw=2:smartindent

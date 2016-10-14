@@ -150,6 +150,9 @@ memory for this release.
 ### Time
 libmetal time APIs provide getting timestamp implementation.
 
+### Sleep
+libmetal sleep APIs provide getting delay execution implementation.
+
 ### Compiler
 
 This API is for compiler dependent functions.  For this release, there is only
