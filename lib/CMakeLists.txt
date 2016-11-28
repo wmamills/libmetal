@@ -2,7 +2,7 @@ collector_create (PROJECT_LIB_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}")
 collector_create (PROJECT_LIB_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}")
 
 collect (PROJECT_LIB_DIRS "${CMAKE_CURRENT_BINARY_DIR}")
-collect (PROJECT_INC_DIRS "${CMAKE_CURRENT_BINARY_DIR}")
+collect (PROJECT_INC_DIRS "${CMAKE_CURRENT_BINARY_DIR}/include")
 
 collect (PROJECT_LIB_HEADERS atomic.h)
 collect (PROJECT_LIB_HEADERS compiler.h)
@@ -44,8 +44,8 @@ collector_list (_headers PROJECT_LIB_HEADERS)
 collector_list (_deps PROJECT_LIB_DEPS)
 
 foreach (f ${_headers})
-  configure_file (${f} ${PROJECT_NAME}/${f} @ONLY)
-  install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}/${f}
+  configure_file (${f} include/${PROJECT_NAME}/${f} @ONLY)
+  install (FILES ${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}/${f}
            DESTINATION include RENAME ${PROJECT_NAME}/${f})
   if (${f} MATCHES "^[^/]*\\.h")
     collect (PROJECT_HDR_TESTS "metal/${f}")
