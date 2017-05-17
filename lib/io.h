@@ -80,6 +80,21 @@ struct metal_io_ops {
 				 uint64_t value,
 				 memory_order order,
 				 int width);
+	int		(*block_read)(struct metal_io_region *io,
+				unsigned long offset,
+				void *restrict dst,
+				memory_order order,
+				int len);
+	int		(*block_write)(struct metal_io_region *io,
+				 unsigned long offset,
+				 void *restrict src,
+				 memory_order order,
+				 int len);
+	void		(*block_set)(struct metal_io_region *io,
+				 unsigned long offset,
+				 unsigned char value,
+				 memory_order order,
+				 int len);
 	void		(*close)(struct metal_io_region *io);
 };
 
@@ -111,7 +126,7 @@ metal_io_init(struct metal_io_region *io, void *virt,
 	      unsigned page_shift, unsigned int mem_flags,
 	      const struct metal_io_ops *ops)
 {
-	const struct metal_io_ops nops = {NULL, NULL, NULL};
+	const struct metal_io_ops nops = {NULL, NULL, NULL, NULL, NULL, NULL};
 	io->virt = virt;
 	io->physmap = physmap;
 	io->size = size;
@@ -333,6 +348,39 @@ metal_io_write(struct metal_io_region *io, unsigned long offset,
 	metal_io_write((_io), (_ofs), (_val), (_order), 8)
 #define metal_io_write64(_io, _ofs, _val)				\
 	metal_io_write((_io), (_ofs), (_val), memory_order_seq_cst, 8)
+
+/**
+ * @brief	Read a block from an I/O region.
+ * @param[in]	io	I/O region handle.
+ * @param[in]	offset	Offset into I/O region.
+ * @param[in]	dst	destination to store the read data.
+ * @param[in]	len	length in bytes to read.
+ * @return      On success, number of bytes read. On failure, negative value
+ */
+int metal_io_block_read(struct metal_io_region *io, unsigned long offset,
+	       void *restrict dst, int len);
+
+/**
+ * @brief	Write a block into an I/O region.
+ * @param[in]	io	I/O region handle.
+ * @param[in]	offset	Offset into I/O region.
+ * @param[in]	src	source to write.
+ * @param[in]	len	length in bytes to write.
+ * @return      On success, number of bytes written. On failure, negative value
+ */
+int metal_io_block_write(struct metal_io_region *io, unsigned long offset,
+	       void *restrict src, int len);
+
+/**
+ * @brief	fill a block of an I/O region.
+ * @param[in]	io	I/O region handle.
+ * @param[in]	offset	Offset into I/O region.
+ * @param[in]	value	value to fill into the block
+ * @param[in]	len	length in bytes to fill.
+ * @return      On success, number of bytes filled. On failure, negative value
+ */
+int metal_io_block_set(struct metal_io_region *io, unsigned long offset,
+	       unsigned char value, int len);
 
 /**
  * @brief	libmetal memory map
