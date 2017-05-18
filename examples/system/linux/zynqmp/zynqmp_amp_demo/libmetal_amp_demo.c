@@ -89,6 +89,7 @@
 
 #define PKGS_TOTAL 1024
 
+#define BUF_SIZE_MAX 512
 #define SHUTDOWN "shutdown"
 
 #define LPRINTF(format, ...) \
@@ -243,7 +244,7 @@ static void *ipi_task_echo(void *arg)
 	struct shm_mg_s *shm0_mg, *shm1_mg;
 	shm_addr_t *shm0_addr_array, *shm1_addr_array;
 	struct msg_hdr_s *msg_hdr, *msg_hdr_echo;
-	void *d0, *d1;
+	void *d0, *d1, *lbuf, *tmpptr;
 	metal_phys_addr_t d1_pa;
 	unsigned long long tstart, tend;
 	long long tdiff;
@@ -254,6 +255,11 @@ static void *ipi_task_echo(void *arg)
 	shm0_addr_array = (void *)shm0_mg + sizeof(struct shm_mg_s);
 	shm1_addr_array = (void *)shm1_mg + sizeof(struct shm_mg_s);
 	d0 = metal_io_virt(ch->shm_io, ch->d0_start_offset);
+	lbuf = malloc(BUF_SIZE_MAX);
+	if (!lbuf) {
+		LPRINTF("ERROR: Failed to allocate local buffer for msg.\n");
+		return NULL;
+	}
 
 	LPRINTF("Start echo flood testing....\n");
 	LPRINTF("It sends msgs to the remote.\n");
@@ -264,19 +270,27 @@ static void *ipi_task_echo(void *arg)
 	shm1_mg->avails = 0;
 	shm1_mg->used = 0;
 	for (i = 0; i < PKGS_TOTAL; i++) {
-		tstart = get_timestamp();
 		/* Construct a message to send */
-		msg_hdr = (struct msg_hdr_s *)d0;
+		tmpptr = lbuf;
+		msg_hdr = tmpptr;
 		msg_hdr->index = i;
 		msg_hdr->len = sizeof(tstart);
-		d0 += (sizeof(struct msg_hdr_s));
-		metal_memcpy_io(d0, (void *)&tstart, msg_hdr->len);
+		tmpptr += sizeof(struct msg_hdr_s);
+		tstart = get_timestamp();
+		*(unsigned long long *)tmpptr = tstart;
+
+		/* copy message to shared buffer */
+		metal_io_block_write(ch->shm_io,
+			metal_io_virt_to_offset(ch->shm_io, d0),
+			msg_hdr,
+			sizeof(struct msg_hdr_s) + msg_hdr->len);
+
 		/* Update the shared memory management information
 		 * Tell the other end where the d0 buffer is.
 		 */
 		shm0_addr_array[i] = (shm_addr_t)metal_io_virt_to_phys(
-				ch->shm_io, msg_hdr);
-		d0 += msg_hdr->len;
+				ch->shm_io, d0);
+		d0 += sizeof(struct msg_hdr_s) + msg_hdr->len;
 		shm0_mg->avails++;
 
 		/* memory barrier */
@@ -307,7 +321,7 @@ static void *ipi_task_echo(void *arg)
 			if (!d1) {
 				LPRINTF("ERROR: failed to get rx address: 0x%lx.\n",
 					d1_pa);
-				return NULL;
+				goto out;
 			}
 			msg_hdr_echo = (struct msg_hdr_s *)d1;
 
@@ -315,7 +329,7 @@ static void *ipi_task_echo(void *arg)
 			if (msg_hdr_echo->index != (uint32_t)i) {
 				LPRINTF("ERROR: wrong msg: expected: %d, actual: %d\n",
 					i, msg_hdr_echo->index);
-				return NULL;
+				goto out;
 			}
 			d1 += sizeof(struct msg_hdr_s);
 			d0 += sizeof(struct msg_hdr_s);
@@ -324,7 +338,7 @@ static void *ipi_task_echo(void *arg)
 				LPRINTF("ERROR: wrong message, [%d], %llu:%llu\n",
 					i, *(unsigned long long *)d0,
 					*(unsigned long long *)d1);
-				return NULL;
+				goto out;
 			}
 			d0 += msg_hdr_echo->len;
 			shm1_mg->used++;
@@ -335,11 +349,18 @@ static void *ipi_task_echo(void *arg)
 	tdiff = tend - tstart;
 
 	/* Send shutdown message */
-	msg_hdr = (struct msg_hdr_s *)d0;
+	tmpptr = lbuf;
+	msg_hdr = tmpptr;
 	msg_hdr->index = i;
-	d0 += sizeof(struct msg_hdr_s);
-	sprintf(d0, SHUTDOWN);
-	msg_hdr->len = sizeof(d0);
+	msg_hdr->len = strlen(SHUTDOWN);
+	tmpptr += sizeof(struct msg_hdr_s);
+	sprintf(tmpptr, SHUTDOWN);
+	/* copy message to shared buffer */
+	metal_io_block_write(ch->shm_io,
+		metal_io_virt_to_offset(ch->shm_io, d0),
+		msg_hdr,
+		sizeof(struct msg_hdr_s) + msg_hdr->len);
+
 	shm0_addr_array[i] = (uint64_t)metal_io_virt_to_phys(
 				ch->shm_io, msg_hdr);
 	shm0_mg->avails++;
@@ -353,6 +374,8 @@ static void *ipi_task_echo(void *arg)
 	LPRINTF("Total packages: %d, time_avg = %lds, %ldns\n",
 		i, (long int)tdiff_avg_s, (long int)tdiff_avg_ns);
 
+out:
+	free(lbuf);
 	return NULL;
 }
 

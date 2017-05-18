@@ -58,6 +58,7 @@
 #define D0_SHM_OFFSET   0x00000
 #define D1_SHM_OFFSET   0x20000
 
+#define BUF_SIZE_MAX 512
 #define SHUTDOWN "shutdown"
 
 #define LPRINTF(format, ...) \
@@ -155,14 +156,20 @@ static void *ipi_task_echod(void *arg)
 	shm_addr_t *shm0_addr_array, *shm1_addr_array;
 	struct msg_hdr_s *msg_hdr;
 	unsigned int flags;
-	void *d0, *d1;
+	void *d0, *d1, *lbuf;
 	metal_phys_addr_t d0_pa;
+	int len;
 
 	shm0_mg = (struct shm_mg_s *)metal_io_virt(ch->shm0_desc_io, 0);
 	shm1_mg = (struct shm_mg_s *)metal_io_virt(ch->shm1_desc_io, 0);
 	shm0_addr_array = (void *)shm0_mg + sizeof(struct shm_mg_s);
 	shm1_addr_array = (void *)shm1_mg + sizeof(struct shm_mg_s);
 	d1 = metal_io_virt(ch->shm_io, ch->d1_start_offset);
+	lbuf = malloc(BUF_SIZE_MAX);
+	if (!lbuf) {
+		LPRINTF("ERROR: Failed to allocate local buffer for msg.\n");
+		return NULL;
+	}
 
 	LPRINTF("Wait for echo test to start.\n");
 	while (1) {
@@ -180,33 +187,51 @@ static void *ipi_task_echod(void *arg)
 			d0_pa = (metal_phys_addr_t)shm0_addr_array[shm0_mg->used];
 			d0 = metal_io_phys_to_virt(ch->shm_io, d0_pa);
 			if (!d0) {
-				LPRINTF("ERROR: failed to get rx address: 0x%lx.\n",
+				LPRINTF("ERROR: failed to get rx addr:0x%lx.\n",
 					d0_pa);
-				return NULL;
+				goto out;
 			}
-			msg_hdr = (struct msg_hdr_s *)d0;
+			/* Copy msg header from shared buf to local mem */
+			len = metal_io_block_read(ch->shm_io,
+				metal_io_virt_to_offset(ch->shm_io, d0),
+				lbuf, sizeof(struct msg_hdr_s));
+			if (len < (int)sizeof(struct msg_hdr_s)) {
+				LPRINTF("ERROR: failed to get msg header.\n");
+				goto out;
+			}
+			msg_hdr = lbuf;
 			if (msg_hdr->len < 0) {
 				LPRINTF("ERROR: wrong msg length: %d.\n",
 					(int)msg_hdr->len);
-				return NULL;
-#if DEBUG
+				goto out;
 			} else {
+				/* copy msg data from shared buf to local mem */
+				d0 += sizeof(struct msg_hdr_s);
+				len = metal_io_block_read(ch->shm_io,
+					metal_io_virt_to_offset(ch->shm_io, d0),
+					lbuf + sizeof(struct msg_hdr_s),
+					msg_hdr->len);
+#if DEBUG
 				LPRINTF("received: %d, %d\n",
 					(int)msg_hdr->index, (int)msg_hdr->len);
 #endif
-			}
-			if (msg_hdr->len) {
-				if (!strncmp((d0 + sizeof(struct msg_hdr_s)),
+				/* Check if the it is the shutdown message */
+				if (!strncmp((lbuf + sizeof(struct msg_hdr_s)),
 					 SHUTDOWN, sizeof(SHUTDOWN))) {
 					LPRINTF("Received shutdown message\n");
-					return NULL;
+					goto out;
 				}
 			}
-			memcpy(d1, d0, sizeof(struct msg_hdr_s) + msg_hdr->len);
+			/* Copy the message back to the other end */
+			metal_io_block_write(ch->shm_io,
+				metal_io_virt_to_offset(ch->shm_io, d1),
+				lbuf,
+				sizeof(struct msg_hdr_s) + msg_hdr->len);
 
 			/* Update the d1 address */
-			shm1_addr_array[shm1_mg->avails] = (uint64_t)metal_io_virt_to_phys(
-					ch->shm_io, d1);
+			shm1_addr_array[shm1_mg->avails] =
+					(uint64_t)metal_io_virt_to_phys(
+						ch->shm_io, d1);
 			d1 += (sizeof(struct msg_hdr_s) + msg_hdr->len);
 			shm0_mg->used++;
 			shm1_mg->avails++;
@@ -214,10 +239,13 @@ static void *ipi_task_echod(void *arg)
 			atomic_thread_fence(memory_order_acq_rel);
 
 			/* Send the message */
-			metal_io_write32(ch->ipi_io, IPI_TRIG_OFFSET, ch->ipi_mask);
+			metal_io_write32(ch->ipi_io, IPI_TRIG_OFFSET,
+					ch->ipi_mask);
 		}
 	}
 
+out:
+	free(lbuf);
 	return NULL;
 }
 
