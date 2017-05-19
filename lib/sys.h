@@ -61,6 +61,9 @@ typedef int metal_irq_t;
 /** Bad physical address value. */
 #define METAL_BAD_PHYS		((metal_phys_addr_t)-1)
 
+/** Bad virtual address value. */
+#define METAL_BAD_VA		((void *)-1)
+
 /** Bad IRQ. */
 #define METAL_BAD_IRQ		((metal_irq_t)-1)
 

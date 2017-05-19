@@ -167,11 +167,7 @@ static inline size_t metal_io_region_size(struct metal_io_region *io)
 static inline void *
 metal_io_virt(struct metal_io_region *io, unsigned long offset)
 {
-#ifdef METAL_INVALID_IO_VADDR
-	return (io->virt != METAL_INVALID_IO_VADDR && offset <= io->size
-#else
-	return (offset <= io->size
-#endif
+	return (io->virt != METAL_BAD_VA && offset <= io->size
 		? (uint8_t *)io->virt + offset
 		: NULL);
 }
