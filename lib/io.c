@@ -115,7 +115,7 @@ int metal_io_block_set(struct metal_io_region *io, unsigned long offset,
 		len = io->size - offset;
 	retlen = len;
 	if (io->ops.block_set) {
-		retlen = (*io->ops.block_set)(
+		(*io->ops.block_set)(
 			io, offset, value, memory_order_seq_cst, len);
 	} else {
 		unsigned int cint = value;

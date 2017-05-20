@@ -249,8 +249,7 @@ static int metal_uio_dev_open(struct linux_bus *lbus, struct linux_device *ldev)
 			 metal_map(ldev->fd, offset, size, 0, 0, &virt));
 		if (!result) {
 			io = &ldev->device.regions[ldev->device.num_regions];
-			metal_io_init(io, virt, phys, size, -1,
-				      METAL_UNCACHED | METAL_IO_MAPPED, NULL);
+			metal_io_init(io, virt, phys, size, -1, 0, NULL);
 			ldev->device.num_regions++;
 		}
 	}
@@ -619,3 +618,10 @@ void metal_linux_bus_finish(void)
 			metal_bus_unregister(bus);
 	}
 }
+
+int metal_generic_dev_sys_open(struct metal_device *dev)
+{
+	(void)dev;
+	return 0;
+}
+

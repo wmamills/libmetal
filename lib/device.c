@@ -145,7 +145,7 @@ static int metal_generic_dev_open(struct metal_bus *bus, const char *dev_name,
 		if (strcmp(dev->name, dev_name) != 0)
 			continue;
 		*device = dev;
-		return 0;
+		return metal_generic_dev_sys_open(dev);
 	}
 
 	return -ENODEV;

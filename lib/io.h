@@ -50,23 +50,6 @@ extern "C" {
 /** \defgroup io IO Interfaces
  *  @{ */
 
-/** I/O memory flags macros for caching scheme */
-
-/** Cache bits */
-#define METAL_CACHE_UNKNOWN  0x0 /** Use cache, unknown cache type */
-#define METAL_UNCACHED       0x1 /** No cache */
-#define METAL_CACHE_WB       0x2 /** Write back */
-#define METAL_CACHE_WT       0x4 /** Write through */
-
-/** Memory types */
-#define METAL_MEM_MAPPED      0x10 /** Memory mapped */
-#define METAL_IO_MAPPED       0x20 /** I/O mapped */
-#define METAL_SHARED_MEM      0x40 /** Shared memory */
-
-/** DMA cache bits */
-#define METAL_DMA_NO_CACHE_OPS 0x0  /** No cache ops in DMA transaction */
-#define METAL_DMA_CACHE_OPS    0x1  /** Require cache ops in DMA transaction */
-
 struct metal_io_region;
 
 /** Generic I/O operations. */
@@ -377,20 +360,6 @@ int metal_io_block_write(struct metal_io_region *io, unsigned long offset,
  */
 int metal_io_block_set(struct metal_io_region *io, unsigned long offset,
 	       unsigned char value, int len);
-
-/**
- * @brief	libmetal memory map
- *
- * This function is to enable memory mapping to the specified I/O memory.
- *
- * @param[in]	pa     physical memory start address
- * @param[in]   io     memory region
- * @param[in]   size   size of the memory range
- * @return	logical address if suceeded, or 0 if failed.
- */
-void *metal_io_mem_map(metal_phys_addr_t pa,
-		     struct metal_io_region *io,
-		     size_t size);
 
 #ifdef __cplusplus
 }
