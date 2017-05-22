@@ -362,7 +362,7 @@ static void *ipi_task_echo(void *arg)
 		sizeof(struct msg_hdr_s) + msg_hdr->len);
 
 	shm0_addr_array[i] = (uint64_t)metal_io_virt_to_phys(
-				ch->shm_io, msg_hdr);
+				ch->shm_io, d0);
 	shm0_mg->avails++;
 	atomic_thread_fence(memory_order_acq_rel);
 	LPRINTF("Sending shutdown message...\n");
@@ -475,12 +475,6 @@ int main(void)
 		ret = -ENODEV;
 		goto out;
 	}
-	if (!metal_io_mem_map(metal_io_phys(io, 0), io, io->size)) {
-		LPRINTF("ERROR: Failed to memory map shmem descriptor.\n");
-		metal_device_close(device);
-		ret = -ENODEV;
-		goto out;
-	}
 
 	/* Store the shared memory device and I/O region */
 	ch0.shm0_desc_dev = device;
@@ -502,17 +496,6 @@ int main(void)
 		ret = -ENODEV;
 		goto out;
 	}
-	/* The metal_io_mem_map() does nothing for Linux userspace, as the memory
-	 * mapping is done by the kernel. It is put here for the code can be portable
-	 * across different system.
-	 */
-	if (!metal_io_mem_map(metal_io_phys(io, 0), io, io->size)) {
-		LPRINTF("ERROR: Failed to memory map shmem descriptor.\n");
-		metal_device_close(device);
-		ret = -ENODEV;
-		goto out;
-	}
-
 	/* Store the shared memory device and I/O region */
 	ch0.shm1_desc_dev = device;
 	ch0.shm1_desc_io = io;
@@ -529,12 +512,6 @@ int main(void)
 	if (!io) {
 		LPRINTF("ERROR: Failed to map io regio for %s.\n",
 			  device->name);
-		metal_device_close(device);
-		ret = -ENODEV;
-		goto out;
-	}
-	if (!metal_io_mem_map(metal_io_phys(io, 0), io, io->size)) {
-		LPRINTF("ERROR: Failed to memory map shmem.\n");
 		metal_device_close(device);
 		ret = -ENODEV;
 		goto out;

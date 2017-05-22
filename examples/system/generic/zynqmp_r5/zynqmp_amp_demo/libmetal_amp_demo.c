@@ -412,12 +412,6 @@ int main(void)
 		ret = -ENODEV;
 		goto out;
 	}
-	if (!metal_io_mem_map(metal_io_phys(io, 0), io, io->size)) {
-		LPRINTF("ERROR: Failed to memory map shmem.\n");
-		metal_device_close(device);
-		ret = -ENODEV;
-		goto out;
-	}
 
 	/* Store the shared memory0 descriptor device and I/O region */
 	ch0.shm0_desc_dev = device;
@@ -440,13 +434,6 @@ int main(void)
 		ret = -ENODEV;
 		goto out;
 	}
-	if (!metal_io_mem_map(metal_io_phys(io, 0), io, io->size)) {
-		LPRINTF("ERROR: Failed to memory map shmem.\n");
-		metal_device_close(device);
-		ret = -ENODEV;
-		goto out;
-	}
-
 	/* Store the shared memory1 descriptor device and I/O region */
 	ch0.shm1_desc_dev = device;
 	ch0.shm1_desc_io = io;
@@ -463,12 +450,6 @@ int main(void)
 	if (!io) {
 		LPRINTF("ERROR: Failed to map io regio for %s.\n",
 			  device->name);
-		metal_device_close(device);
-		ret = -ENODEV;
-		goto out;
-	}
-	if (!metal_io_mem_map(metal_io_phys(io, 0), io, io->size)) {
-		LPRINTF("ERROR: Failed to memory map shmem.\n");
 		metal_device_close(device);
 		ret = -ENODEV;
 		goto out;
