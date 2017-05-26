@@ -45,11 +45,12 @@
 
 #define MPU_REGION_SIZE_MIN 0x20
 
-static unsigned int int_old_val = 0;
+/* application code would have enabled IRQ initially */
+static unsigned int int_old_val = XIL_EXCEPTION_ALL;
 
 void sys_irq_restore_enable(void)
 {
-	Xil_ExceptionEnableMask(int_old_val);
+	Xil_ExceptionEnableMask(~int_old_val);
 }
 
 void sys_irq_save_disable(void)
