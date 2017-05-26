@@ -73,12 +73,11 @@
 #define     ARM_AR_MEM_TTB_DESC_ALL_ACCESS         (ARM_AR_MEM_TTB_DESC_AP_MANAGER |          \
                                                      ARM_AR_MEM_TTB_DESC_SECT)
 
-
-static unsigned int int_old_val = 0;
+static unsigned int int_old_val = XIL_EXCEPTION_ALL;
 
 void sys_irq_restore_enable(void)
 {
-	Xil_ExceptionEnableMask(int_old_val);
+	Xil_ExceptionEnableMask(~int_old_val);
 }
 
 void sys_irq_save_disable(void)
