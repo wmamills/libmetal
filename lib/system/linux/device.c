@@ -450,6 +450,7 @@ static int metal_linux_dev_open(struct metal_bus *bus,
 		}
 
 		*device = &ldev->device;
+		(*device)->name = ldev->dev_name;
 
 		return 0;
 	}
