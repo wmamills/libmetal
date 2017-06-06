@@ -41,6 +41,7 @@
 #include "metal/io.h"
 #include "metal/device.h"
 #include "metal/sys.h"
+#include "metal/irq.h"
 
 #ifdef STDOUT_IS_16550
  #include "xuartns550_l.h"
@@ -52,7 +53,7 @@
 
 #define IPI_IRQ_VECT_ID         65
 
-XScuGic InterruptController;
+static XScuGic xInterruptController;
 
 const metal_phys_addr_t metal_phys[] = {
 	0xFF310000, /**< base IPI address */
@@ -148,8 +149,6 @@ struct metal_device metal_dev_table[] = {
 	},
 };
 
-extern void metal_irq_isr(int irq);
-
 /**
  * @brief enable_caches() - Enable caches
  */
@@ -210,7 +209,7 @@ int init_irq()
 		return (int)XST_FAILURE;
 	}
 
-	ret = XScuGic_CfgInitialize(&InterruptController, IntcConfig,
+	ret = XScuGic_CfgInitialize(&xInterruptController, IntcConfig,
 				       IntcConfig->CpuBaseAddress);
 	if (ret != XST_SUCCESS) {
 		return (int)XST_FAILURE;
@@ -222,15 +221,15 @@ int init_irq()
 	 */
 	Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_IRQ_INT,
 			(Xil_ExceptionHandler)XScuGic_InterruptHandler,
-			&InterruptController);
+			&xInterruptController);
 
 	Xil_ExceptionEnable();
 	/* Connect IPI Interrupt ID with libmetal ISR */
-	XScuGic_Connect(&InterruptController, IPI_IRQ_VECT_ID,
+	XScuGic_Connect(&xInterruptController, IPI_IRQ_VECT_ID,
 			   (Xil_ExceptionHandler)metal_irq_isr,
 			   (void *)IPI_IRQ_VECT_ID);
 
-	XScuGic_Enable(&InterruptController, IPI_IRQ_VECT_ID);
+	XScuGic_Enable(&xInterruptController, IPI_IRQ_VECT_ID);
 
 	return 0;
 }
