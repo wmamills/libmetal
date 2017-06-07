@@ -31,6 +31,10 @@
 #include <stdlib.h>
 #include <errno.h>
 
+/* We need to find the internal MAX_IRQS limit */
+/* Could be retrieved from platform specific files in the future */
+#define METAL_INTERNAL
+
 #include "metal-test.h"
 #include "metal/irq.h"
 #include "metal/log.h"
