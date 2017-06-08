@@ -63,17 +63,18 @@
   *     * If "shutdown" message is received, cleanup the libmetal source.
   */
 #include <unistd.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
 
 #include <metal/sys.h>
 #include <metal/device.h>
 #include <metal/irq.h>
 #include <metal/atomic.h>
 #include <metal/cpu.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <string.h>
+
 #include "sys_init.h"
 
 #define IPI_TRIG_OFFSET 0x0

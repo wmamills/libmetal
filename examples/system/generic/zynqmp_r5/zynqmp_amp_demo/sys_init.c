@@ -30,21 +30,22 @@
 *
 ******************************************************************************/
 
-#include "xparameters.h"
-#include "xil_cache.h"
-#include "xil_exception.h"
-#include "xstatus.h"
-#include "xscugic.h"
-#include "xreg_cortexr5.h"
+#include <xparameters.h>
+#include <xil_cache.h>
+#include <xil_exception.h>
+#include <xstatus.h>
+#include <xscugic.h>
+#include <xreg_cortexr5.h>
+
+#include <metal/io.h>
+#include <metal/device.h>
+#include <metal/sys.h>
+#include <metal/irq.h>
 
 #include "platform_config.h"
-#include "metal/io.h"
-#include "metal/device.h"
-#include "metal/sys.h"
-#include "metal/irq.h"
 
 #ifdef STDOUT_IS_16550
- #include "xuartns550_l.h"
+ #include <xuartns550_l.h>
 
  #define UART_BAUD 9600
 #endif
@@ -274,7 +275,7 @@ int sys_init()
 	enable_caches();
 	init_uart();
 	if (init_irq()) {
-		xil_printf("Failed to intialize interrupt\n");
+		xil_printf("Failed to initialize interrupt\n");
 	}
 	/** Register the device */
 	metal_init(&metal_param);
