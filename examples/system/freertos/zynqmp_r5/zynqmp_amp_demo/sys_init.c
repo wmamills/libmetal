@@ -35,6 +35,7 @@
 #include <xil_exception.h>
 #include <xstatus.h>
 #include <xscugic.h>
+#include <xreg_cortexr5.h>
 
 #include <metal/io.h>
 #include <metal/device.h>
@@ -75,7 +76,7 @@ struct metal_device metal_dev_table[] = {
 				0x1000,
 				(sizeof(metal_phys_addr_t) << 3),
 				(unsigned long)(-1),
-				METAL_UNCACHED,
+				DEVICE_NONSHARED | PRIV_RW_USER_RW,
 				{NULL},
 			}
 		},
@@ -96,7 +97,7 @@ struct metal_device metal_dev_table[] = {
 				0x1000,
 				(sizeof(metal_phys_addr_t) << 3),
 				(unsigned long)(-1),
-				METAL_UNCACHED | METAL_SHARED_MEM,
+				NORM_SHARED_NCACHE | PRIV_RW_USER_RW,
 				{NULL},
 			}
 		},
@@ -117,7 +118,7 @@ struct metal_device metal_dev_table[] = {
 				0x1000,
 				(sizeof(metal_phys_addr_t) << 3),
 				(unsigned long)(-1),
-				METAL_UNCACHED | METAL_SHARED_MEM,
+				NORM_SHARED_NCACHE | PRIV_RW_USER_RW,
 				{NULL},
 			}
 		},
@@ -135,10 +136,10 @@ struct metal_device metal_dev_table[] = {
 			{
 				(void *)0x3ED20000,
 				&metal_phys[3],
-				0x100000,
+				0x40000,
 				(sizeof(metal_phys_addr_t) << 3),
 				(unsigned long)(-1),
-				METAL_UNCACHED | METAL_SHARED_MEM,
+				NORM_SHARED_NCACHE | PRIV_RW_USER_RW,
 				{NULL},
 			}
 		},
@@ -215,7 +216,7 @@ int init_irq()
  */
 int platform_register_metal_device (void)
 {
-	int i;
+	unsigned int i;
 	int ret;
 	struct metal_device *dev;
 	metal_bus_register(&metal_generic_bus);
