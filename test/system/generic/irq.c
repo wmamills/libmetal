@@ -54,7 +54,8 @@ int irq_handler(int irq, void *priv)
 
 static int irq(void)
 {
-	int i, j, rc = 0, flags_1, flags_2;
+	long i, j;
+	int rc = 0, flags_1, flags_2;
 	enum metal_log_level mll= metal_get_log_level();
 
 
