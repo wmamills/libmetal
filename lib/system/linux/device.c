@@ -123,14 +123,14 @@ static int metal_uio_dev_bind(struct linux_device *ldev,
 		return 0;
 
 	if (strcmp(ldev->sdev->driver_name, SYSFS_UNKNOWN) != 0) {
-		metal_log(LOG_ERROR, "device %s in use by driver %s\n",
+		metal_log(METAL_LOG_ERROR, "device %s in use by driver %s\n",
 			  ldev->dev_name, ldev->sdev->driver_name);
 		return -EBUSY;
 	}
 
 	attr = sysfs_get_device_attr(ldev->sdev, "driver_override");
 	if (!attr) {
-		metal_log(LOG_ERROR, "device %s has no override\n",
+		metal_log(METAL_LOG_ERROR, "device %s has no override\n",
 			  ldev->dev_name);
 		return -errno;
 	}
@@ -138,7 +138,7 @@ static int metal_uio_dev_bind(struct linux_device *ldev,
 	result = sysfs_write_attribute(attr, ldrv->drv_name,
 				       strlen(ldrv->drv_name));
 	if (result) {
-		metal_log(LOG_ERROR, "failed to set override on %s\n",
+		metal_log(METAL_LOG_ERROR, "failed to set override on %s\n",
 			  ldev->dev_name);
 		return -errno;
 	}
@@ -146,19 +146,19 @@ static int metal_uio_dev_bind(struct linux_device *ldev,
 
 	attr = sysfs_get_driver_attr(ldrv->sdrv, "bind");
 	if (!attr) {
-		metal_log(LOG_ERROR, "driver %s has no bind\n", ldrv->drv_name);
+		metal_log(METAL_LOG_ERROR, "driver %s has no bind\n", ldrv->drv_name);
 		return -ENOTSUP;
 	}
 
 	result = sysfs_write_attribute(attr, ldev->dev_name,
 				       strlen(ldev->dev_name));
 	if (result) {
-		metal_log(LOG_ERROR, "failed to bind %s to %s\n",
+		metal_log(METAL_LOG_ERROR, "failed to bind %s to %s\n",
 			  ldev->dev_name, ldrv->drv_name);
 		return -errno;
 	}
 
-	metal_log(LOG_DEBUG, "bound device %s to driver %s\n",
+	metal_log(METAL_LOG_DEBUG, "bound device %s to driver %s\n",
 		  ldev->dev_name, ldrv->drv_name);
 
 	return 0;
@@ -180,11 +180,11 @@ static int metal_uio_dev_open(struct linux_bus *lbus, struct linux_device *ldev)
 
 	ldev->sdev = sysfs_open_device(lbus->bus_name, ldev->dev_name);
 	if (!ldev->sdev) {
-		metal_log(LOG_ERROR, "device %s:%s not found\n",
+		metal_log(METAL_LOG_ERROR, "device %s:%s not found\n",
 			  lbus->bus_name, ldev->dev_name);
 		return -ENODEV;
 	}
-	metal_log(LOG_DEBUG, "opened sysfs device %s:%s\n",
+	metal_log(METAL_LOG_DEBUG, "opened sysfs device %s:%s\n",
 		  lbus->bus_name, ldev->dev_name);
 
 	result = metal_uio_dev_bind(ldev, ldrv);
@@ -194,7 +194,7 @@ static int metal_uio_dev_open(struct linux_bus *lbus, struct linux_device *ldev)
 	snprintf(path, sizeof(path), "%s/uio", ldev->sdev->path);
 	dlist = sysfs_open_directory_list(path);
 	if (!dlist) {
-		metal_log(LOG_ERROR, "failed to scan class path %s\n",
+		metal_log(METAL_LOG_ERROR, "failed to scan class path %s\n",
 			  path);
 		return -errno;
 	}
@@ -209,7 +209,7 @@ static int metal_uio_dev_open(struct linux_bus *lbus, struct linux_device *ldev)
 	sysfs_close_list(dlist);
 
 	if (sysfs_path_is_dir(ldev->cls_path) != 0) {
-		metal_log(LOG_ERROR, "invalid device class path %s\n",
+		metal_log(METAL_LOG_ERROR, "invalid device class path %s\n",
 			  ldev->cls_path);
 		return -ENODEV;
 	}
@@ -222,19 +222,19 @@ static int metal_uio_dev_open(struct linux_bus *lbus, struct linux_device *ldev)
 		i++;
 	} while (i < 1000);
 	if (i >= 1000) {
-		metal_log(LOG_ERROR, "failed to open file %s, timeout.\n",
+		metal_log(METAL_LOG_ERROR, "failed to open file %s, timeout.\n",
 			  ldev->dev_path);
 		return -ENODEV;
 	}
 	result = metal_open(ldev->dev_path, 0);
 	if (result < 0) {
-		metal_log(LOG_ERROR, "failed to open device %s\n",
+		metal_log(METAL_LOG_ERROR, "failed to open device %s\n",
 			  ldev->dev_path, strerror(-result));
 		return result;
 	}
 	ldev->fd = result;
 
-	metal_log(LOG_DEBUG, "opened %s:%s as %s\n",
+	metal_log(METAL_LOG_DEBUG, "opened %s:%s as %s\n",
 		  lbus->bus_name, ldev->dev_name, ldev->dev_path);
 
 	for (i = 0, result = 0; !result && i < METAL_MAX_DEVICE_REGIONS; i++) {
@@ -256,7 +256,7 @@ static int metal_uio_dev_open(struct linux_bus *lbus, struct linux_device *ldev)
 
 	irq_info = 1;
 	if (write(ldev->fd, &irq_info, sizeof(irq_info)) <= 0) {
-		metal_log(LOG_INFO,
+		metal_log(METAL_LOG_INFO,
 			  "%s: No IRQ for device %s.\n",
 			  __func__, ldev->dev_name);
 		ldev->device.irq_num =  0;
@@ -302,7 +302,7 @@ static void metal_uio_dev_irq_ack(struct linux_bus *lbus,
 
 	ret = read(ldev->fd, (void *)&val, sizeof(val));
 	if (ret < 0)
-		metal_log(LOG_ERROR, "%s, read uio irq fd %d failed: %d.\n",
+		metal_log(METAL_LOG_ERROR, "%s, read uio irq fd %d failed: %d.\n",
 						__func__, ldev->fd, ret);
 	(void)write(ldev->fd, &irq_info, sizeof(irq_info));
 }
@@ -335,7 +335,7 @@ static int metal_uio_dev_dma_map(struct linux_bus *lbus,
 			}
 		}
 		if (j == (int)ldev->device.num_regions) {
-			metal_log(LOG_WARNING,
+			metal_log(METAL_LOG_WARNING,
 			  "%s,%s: input address isn't MMIO addr: 0x%x,%d.\n",
 			__func__, ldev->dev_name, vaddr_sg_lo, sg_in[i].len);
 			return -EINVAL;

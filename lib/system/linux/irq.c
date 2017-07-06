@@ -90,20 +90,20 @@ int metal_irq_register(int irq,
 	int i;
 
 	if (irq < 0) {
-		metal_log(LOG_ERROR,
+		metal_log(METAL_LOG_ERROR,
 			  "%s: irq fd %d is less than 0.\n",
 			  __func__, irq);
 		return -EINVAL;
 	}
 	if (irq >= MAX_IRQS) {
-		metal_log(LOG_ERROR,
+		metal_log(METAL_LOG_ERROR,
 			  "%s: irq fd %d is larger than the max supported %d.\n",
 			  __func__, irq, MAX_IRQS);
 		return -EINVAL;
 	}
 	metal_mutex_acquire(&_irqs.irq_lock);
 	if (_irqs.irq_state == METAL_IRQ_STOP) {
-		metal_log(LOG_ERROR,
+		metal_log(METAL_LOG_ERROR,
 			  "%s: failed. metal IRQ handling has stopped.\n",
 			  __func__);
 		metal_mutex_release(&_irqs.irq_lock);
@@ -121,7 +121,7 @@ int metal_irq_register(int irq,
 		if ((hd_desc->drv_id == drv_id) &&
 		    (hd_desc->dev == dev)) {
 			if (hd) {
-				metal_log(LOG_ERROR, "%s: irq %d has already registered."
+				metal_log(METAL_LOG_ERROR, "%s: irq %d has already registered."
 				         "Will not register again.\n",
 				         __func__, irq);
 				metal_mutex_release(&_irqs.irq_lock);
@@ -151,7 +151,7 @@ int metal_irq_register(int irq,
 		}
 	}
 	if (i == MAX_HDS) {
-		metal_log(LOG_ERROR, "%s: exceed maximum handlers per IRQ.\n",
+		metal_log(METAL_LOG_ERROR, "%s: exceed maximum handlers per IRQ.\n",
 			  __func__);
 		metal_mutex_release(&_irqs.irq_lock);
 		return -EINVAL;
@@ -160,9 +160,9 @@ out:
 	metal_mutex_release(&_irqs.irq_lock);
 	write(_irqs.irq_reg_fd, &val, sizeof(val));
 	if (hd)
-		metal_log(LOG_DEBUG, "%s: registered IRQ %d\n", __func__, irq);
+		metal_log(METAL_LOG_DEBUG, "%s: registered IRQ %d\n", __func__, irq);
 	else
-		metal_log(LOG_DEBUG, "%s: deregistered IRQ %d\n", __func__, irq);
+		metal_log(METAL_LOG_DEBUG, "%s: deregistered IRQ %d\n", __func__, irq);
 	return 0;
 }
 
@@ -208,7 +208,7 @@ static void *metal_linux_irq_handling(void *args)
 
 	pfds = (struct pollfd *)malloc(MAX_IRQS * sizeof(struct pollfd));
 	if (!pfds) {
-		metal_log(LOG_ERROR, "%s: failed to allocate irq fds mem.\n",
+		metal_log(METAL_LOG_ERROR, "%s: failed to allocate irq fds mem.\n",
 			  __func__);
 		return NULL;
 	}
@@ -217,7 +217,7 @@ static void *metal_linux_irq_handling(void *args)
 	/* Ignore the set scheduler error */
 	ret = sched_setscheduler(0, SCHED_FIFO, &param);
 	if (ret) {
-		metal_log(LOG_WARNING, "%s: Failed to set scheduler: %d.\n",
+		metal_log(METAL_LOG_WARNING, "%s: Failed to set scheduler: %d.\n",
 			  __func__, ret);
 	}
 
@@ -244,7 +244,7 @@ static void *metal_linux_irq_handling(void *args)
 		/* Wait for interrupt */
 		ret = poll(pfds, j, -1);
 		if (ret < 0) {
-			metal_log(LOG_ERROR, "%s: poll() failed: %s.\n",
+			metal_log(METAL_LOG_ERROR, "%s: poll() failed: %s.\n",
 				  __func__, strerror(errno));
 			free(pfds);
 			return NULL;
@@ -257,7 +257,7 @@ static void *metal_linux_irq_handling(void *args)
 				/* IRQ registration change notification */
 				if (read(pfds[i].fd, (void*)&val,
 					sizeof(uint64_t)) < 0)
-					metal_log(LOG_ERROR,
+					metal_log(METAL_LOG_ERROR,
 					"%s, read irq fd %d failed.\n",
 					__func__, pfds[i].fd);
 			} else if ((pfds[i].revents & (POLLIN | POLLERR))) {
@@ -285,7 +285,7 @@ static void *metal_linux_irq_handling(void *args)
 							dev->bus, dev, i);
 				}
 			} else if (pfds[i].revents) {
-				metal_log(LOG_DEBUG,
+				metal_log(METAL_LOG_DEBUG,
 					  "%s: poll unexpected. fd %d: %d\n",
 					  __func__, pfds[i].fd,pfds[i].revents);
 			}
@@ -305,7 +305,7 @@ int metal_linux_irq_init()
 	memset(&_irqs, 0, sizeof(_irqs));
 	_irqs.irq_reg_fd = eventfd(0,0);
 	if (_irqs.irq_reg_fd < 0) {
-		metal_log(LOG_ERROR, "Failed to create eventfd for IRQ handling.\n");
+		metal_log(METAL_LOG_ERROR, "Failed to create eventfd for IRQ handling.\n");
 		return  -EAGAIN;
 	}
 
@@ -313,7 +313,7 @@ int metal_linux_irq_init()
 	ret = pthread_create(&_irqs.irq_pthread, NULL,
 				metal_linux_irq_handling, NULL);
 	if (ret != 0) {
-		metal_log(LOG_ERROR, "Failed to create IRQ thread: %d.\n", ret);
+		metal_log(METAL_LOG_ERROR, "Failed to create IRQ thread: %d.\n", ret);
 		return -EAGAIN;
 	}
 	return 0;
@@ -326,14 +326,14 @@ void metal_linux_irq_shutdown()
 {
 	int ret;
 	uint64_t val = 1;
-	metal_log(LOG_DEBUG, "%s\n", __func__);
+	metal_log(METAL_LOG_DEBUG, "%s\n", __func__);
 	metal_mutex_acquire(&_irqs.irq_lock);
 	_irqs.irq_state = METAL_IRQ_STOP;
 	metal_mutex_release(&_irqs.irq_lock);
 	write (_irqs.irq_reg_fd, &val, sizeof(val));
 	ret = pthread_join(_irqs.irq_pthread, NULL);
 	if (ret) {
-		metal_log(LOG_ERROR, "Failed to join IRQ thread: %d.\n", ret);
+		metal_log(METAL_LOG_ERROR, "Failed to join IRQ thread: %d.\n", ret);
 	}
 	close(_irqs.irq_reg_fd);
 	metal_mutex_deinit(&_irqs.irq_lock);

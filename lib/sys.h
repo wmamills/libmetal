@@ -82,7 +82,7 @@ struct metal_init_params {
 #define METAL_INIT_DEFAULTS				\
 {							\
 	.log_handler	= metal_default_log_handler,	\
-	.log_level	= LOG_INFO,			\
+	.log_level	= METAL_LOG_INFO,			\
 }
 
 /**

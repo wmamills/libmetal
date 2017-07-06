@@ -72,7 +72,7 @@ int metal_run_noblock(int threads, metal_thread_t child,
 	thread_wrap_arg_t *wrap_p;
 
 	if (!tids) {
-		metal_log(LOG_ERROR, "invalid arguement, tids is NULL.\n");
+		metal_log(METAL_LOG_ERROR, "invalid arguement, tids is NULL.\n");
 		return -EINVAL;
 	}
 
@@ -80,7 +80,7 @@ int metal_run_noblock(int threads, metal_thread_t child,
 		snprintf(tn, metal_dim(tn), "%d", i);
 		wrap_p = pvPortMalloc(sizeof(thread_wrap_arg_t));
 		if (!wrap_p) {
-			metal_log(LOG_ERROR, "failed to allocate wrapper %d\n", i);
+			metal_log(METAL_LOG_ERROR, "failed to allocate wrapper %d\n", i);
 			break;
 		}
 			
@@ -88,7 +88,7 @@ int metal_run_noblock(int threads, metal_thread_t child,
 		wrap_p->arg = arg;
 		stat = xTaskCreate(thread_wrapper, tn, 256, wrap_p, 2, &tid_p[i]);
 		if (stat != pdPASS) {
-			metal_log(LOG_ERROR, "failed to create thread %d\n", i);
+			metal_log(METAL_LOG_ERROR, "failed to create thread %d\n", i);
 			vPortFree(wrap_p);
 			break;
 		}
@@ -105,7 +105,7 @@ void metal_finish_threads(int threads, void *tids)
 	TaskHandle_t *tid_p = (TaskHandle_t *)tids;
 
 	if (!tids) {
-		metal_log(LOG_ERROR, "invalid argument, tids is NULL.\n");
+		metal_log(METAL_LOG_ERROR, "invalid argument, tids is NULL.\n");
 		return;
 	}
 

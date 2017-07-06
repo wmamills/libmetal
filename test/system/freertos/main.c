@@ -46,7 +46,7 @@ int main(void)
 
 	stat = xTaskCreate(run_tests, "run_tests", 256, NULL, 2, NULL);
 	if (stat != pdPASS) {
-		metal_log(LOG_ERROR, "failed to create run_tests thread\n");
+		metal_log(METAL_LOG_ERROR, "failed to create run_tests thread\n");
 	} else {
 		/* Start running FreeRTOS tasks */
 		vTaskStartScheduler();

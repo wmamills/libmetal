@@ -58,7 +58,7 @@ static int irq(void)
 	enum metal_log_level mll= metal_get_log_level();
 
 
-	metal_set_log_level(LOG_CRITICAL);
+	metal_set_log_level(METAL_LOG_CRITICAL);
 
 	/* go over the max to force an error */
 	for (i=-1; i <=  MAX_IRQS+3; i++) {
@@ -77,7 +77,7 @@ static int irq(void)
 				continue;
 
 			metal_set_log_level(mll);
-			metal_log(LOG_DEBUG, "register irq %d fail hd %d\n", i, j);
+			metal_log(METAL_LOG_DEBUG, "register irq %d fail hd %d\n", i, j);
 			return rc ? rc : -EINVAL;
 		}
 	}
@@ -86,7 +86,7 @@ static int irq(void)
 	rc = metal_irq_register(1, 0, 0, (void *)0);
 	if (rc) {
 		metal_set_log_level(mll);
-		metal_log(LOG_DEBUG, "deregister irq 1 all handlers\n");
+		metal_log(METAL_LOG_DEBUG, "deregister irq 1 all handlers\n");
 		return rc;
 	}
 
@@ -94,7 +94,7 @@ static int irq(void)
 	rc = metal_irq_register(2, 0, 0, (void *)3);
 	if (rc) {
 		metal_set_log_level(mll);
-		metal_log(LOG_DEBUG, "deregister irq 2 hd %d\n", 3);
+		metal_log(METAL_LOG_DEBUG, "deregister irq 2 hd %d\n", 3);
 		return rc;
 	}
 
