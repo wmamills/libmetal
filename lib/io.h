@@ -70,7 +70,7 @@ struct metal_io_ops {
 				int len);
 	int		(*block_write)(struct metal_io_region *io,
 				 unsigned long offset,
-				 void *restrict src,
+				 const void *restrict src,
 				 memory_order order,
 				 int len);
 	void		(*block_set)(struct metal_io_region *io,
@@ -348,7 +348,7 @@ int metal_io_block_read(struct metal_io_region *io, unsigned long offset,
  * @return      On success, number of bytes written. On failure, negative value
  */
 int metal_io_block_write(struct metal_io_region *io, unsigned long offset,
-	       void *restrict src, int len);
+	       const void *restrict src, int len);
 
 /**
  * @brief	fill a block of an I/O region.

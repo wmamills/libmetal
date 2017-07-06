@@ -68,7 +68,7 @@ int metal_io_block_read(struct metal_io_region *io, unsigned long offset,
 }
 
 int metal_io_block_write(struct metal_io_region *io, unsigned long offset,
-	       void *restrict src, int len)
+	       const void *restrict src, int len)
 {
 	void *ptr = metal_io_virt(io, offset);
 	int retlen;
