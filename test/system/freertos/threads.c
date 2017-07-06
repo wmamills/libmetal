@@ -36,6 +36,8 @@
 #include "metal/utilities.h"
 #include "metal-test.h"
 
+#define TEST_THREAD_STACK_SIZE 128
+
 typedef struct {
 		metal_thread_t thread_func;
 		void *arg;
@@ -72,7 +74,7 @@ int metal_run_noblock(int threads, metal_thread_t child,
 	thread_wrap_arg_t *wrap_p;
 
 	if (!tids) {
-		metal_log(METAL_LOG_ERROR, "invalid arguement, tids is NULL.\n");
+		metal_log(METAL_LOG_ERROR, "invalid argument, tids is NULL.\n");
 		return -EINVAL;
 	}
 
@@ -86,7 +88,8 @@ int metal_run_noblock(int threads, metal_thread_t child,
 			
 		wrap_p->thread_func = child;
 		wrap_p->arg = arg;
-		stat = xTaskCreate(thread_wrapper, tn, 256, wrap_p, 2, &tid_p[i]);
+		stat = xTaskCreate(thread_wrapper, tn, TEST_THREAD_STACK_SIZE,
+				   wrap_p, 2, &tid_p[i]);
 		if (stat != pdPASS) {
 			metal_log(METAL_LOG_ERROR, "failed to create thread %d\n", i);
 			vPortFree(wrap_p);
