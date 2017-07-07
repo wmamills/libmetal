@@ -40,6 +40,10 @@
 #ifndef __METAL_GENERIC_IRQ__H__
 #define __METAL_GENERIC_IRQ__H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief      default interrupt handler 
  * @param[in]  interrupt vector
