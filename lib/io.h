@@ -40,6 +40,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include "metal/compiler.h"
 #include "metal/atomic.h"
 #include "metal/sys.h"
 
