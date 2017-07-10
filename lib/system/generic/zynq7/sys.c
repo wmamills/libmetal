@@ -42,9 +42,6 @@
 #include "xil_exception.h"
 #include "metal/sys.h"
 
-/* Translation table is 16K in size */
-#define     ARM_AR_MEM_TTB_SIZE                    16*1024
-
 /* Each TTB descriptor covers a 1MB region */
 #define     ARM_AR_MEM_TTB_SECT_SIZE               1024*1024
 
