@@ -87,7 +87,7 @@ int metal_irq_register(int irq,
 {
 	uint64_t val = 1;
 	struct metal_irq_hddesc *hd_desc;
-	int i;
+	int i, ret;
 
 	if (irq < 0) {
 		metal_log(METAL_LOG_ERROR,
@@ -158,7 +158,10 @@ int metal_irq_register(int irq,
 	}
 out:
 	metal_mutex_release(&_irqs.irq_lock);
-	write(_irqs.irq_reg_fd, &val, sizeof(val));
+	ret = write(_irqs.irq_reg_fd, &val, sizeof(val));
+	if (ret < 0) {
+		metal_log(METAL_LOG_DEBUG, "%s: write failed IRQ %d\n", __func__, irq);
+	}
 	if (hd)
 		metal_log(METAL_LOG_DEBUG, "%s: registered IRQ %d\n", __func__, irq);
 	else
@@ -326,11 +329,15 @@ void metal_linux_irq_shutdown()
 {
 	int ret;
 	uint64_t val = 1;
+
 	metal_log(METAL_LOG_DEBUG, "%s\n", __func__);
 	metal_mutex_acquire(&_irqs.irq_lock);
 	_irqs.irq_state = METAL_IRQ_STOP;
 	metal_mutex_release(&_irqs.irq_lock);
-	write (_irqs.irq_reg_fd, &val, sizeof(val));
+	ret = write (_irqs.irq_reg_fd, &val, sizeof(val));
+	if (ret < 0) {
+		metal_log(METAL_LOG_ERROR, "Failed to write.\n");
+	}
 	ret = pthread_join(_irqs.irq_pthread, NULL);
 	if (ret) {
 		metal_log(METAL_LOG_ERROR, "Failed to join IRQ thread: %d.\n", ret);

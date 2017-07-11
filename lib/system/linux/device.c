@@ -168,7 +168,7 @@ static int metal_uio_dev_open(struct linux_bus *lbus, struct linux_device *ldev)
 {
 	char *instance, path[SYSFS_PATH_MAX];
 	struct linux_driver *ldrv = ldev->ldrv;
-	unsigned long *phys, offset, size;
+	unsigned long *phys, offset=0, size=0;
 	struct metal_io_region *io;
 	struct dlist *dlist;
 	int result, i;
@@ -301,10 +301,16 @@ static void metal_uio_dev_irq_ack(struct linux_bus *lbus,
 	int ret;
 
 	ret = read(ldev->fd, (void *)&val, sizeof(val));
-	if (ret < 0)
+	if (ret < 0) {
 		metal_log(METAL_LOG_ERROR, "%s, read uio irq fd %d failed: %d.\n",
 						__func__, ldev->fd, ret);
-	(void)write(ldev->fd, &irq_info, sizeof(irq_info));
+		return;
+	}
+	ret = write(ldev->fd, &irq_info, sizeof(irq_info));
+	if (ret < 0) {
+		metal_log(METAL_LOG_ERROR, "%s, write uio irq fd %d failed: %d.\n",
+						__func__, ldev->fd, errno);
+	}
 }
 
 static int metal_uio_dev_dma_map(struct linux_bus *lbus,
@@ -542,6 +548,7 @@ static int metal_linux_probe_driver(struct linux_bus *lbus,
 				    struct linux_driver *ldrv)
 {
 	char command[256];
+	int ret;
 
 	ldrv->sdrv = sysfs_open_driver(lbus->bus_name, ldrv->drv_name);
 
@@ -549,7 +556,12 @@ static int metal_linux_probe_driver(struct linux_bus *lbus,
 	if (!ldrv->sdrv) {
 		snprintf(command, sizeof(command),
 			 "modprobe %s > /dev/null 2>&1", ldrv->mod_name);
-		system(command);
+		ret = system(command);
+		if (ret < 0) {
+			metal_log(METAL_LOG_WARNING,
+				  "%s: executing system command '%s' failed.\n",
+				  __func__, command);
+		}
 		ldrv->sdrv = sysfs_open_driver(lbus->bus_name, ldrv->drv_name);
 	}
 
@@ -557,7 +569,12 @@ static int metal_linux_probe_driver(struct linux_bus *lbus,
 	if (!ldrv->sdrv) {
 		snprintf(command, sizeof(command),
 			 "sudo modprobe %s > /dev/null 2>&1", ldrv->mod_name);
-		system(command);
+		ret = system(command);
+		if (ret < 0) {
+			metal_log(METAL_LOG_WARNING,
+				  "%s: executing system command '%s' failed.\n",
+				  __func__, command);
+		}
 		ldrv->sdrv = sysfs_open_driver(lbus->bus_name, ldrv->drv_name);
 	}
 

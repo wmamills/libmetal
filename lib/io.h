@@ -258,8 +258,9 @@ metal_io_read(struct metal_io_region *io, unsigned long offset,
 		return atomic_load_explicit((atomic_ulong *)ptr, order);
 	else if (ptr && sizeof(atomic_ullong) == width)
 		return atomic_load_explicit((atomic_ullong *)ptr, order);
-	else
-		assert(0);
+
+	assert(0);
+	return 0; /* quiet compiler */
 }
 
 /**
