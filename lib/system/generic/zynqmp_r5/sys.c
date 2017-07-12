@@ -45,7 +45,7 @@
 
 #define MPU_REGION_SIZE_MIN 0x20
 
-/* application code would have enabled IRQ initially */ 
+/* application code would have enabled IRQ initially */
 static unsigned int int_old_val = XIL_EXCEPTION_ALL;
 
 void sys_irq_restore_enable(void)
