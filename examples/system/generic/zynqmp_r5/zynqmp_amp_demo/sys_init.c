@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2010 - 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2010 - 2017 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -53,14 +53,18 @@
 #define INTC_DEVICE_ID		XPAR_SCUGIC_0_DEVICE_ID
 
 #define IPI_IRQ_VECT_ID         65
+#define TTC0_IRQ_VECT_ID        68
+
+#define SHM_BASE_ADDR 			0x3ED00000
+#define TTC0_BASE_ADDR			0xFF110000
+#define IPI_BASE_ADDR			0xFF310000
 
 static XScuGic xInterruptController;
 
 const metal_phys_addr_t metal_phys[] = {
-	0xFF310000, /**< base IPI address */
-	0x3ED00000, /**< shared memory0 description base address */
-	0x3ED10000, /**< shared memory0 description base address */
-	0x3ED20000, /**< shared memory base address */
+	IPI_BASE_ADDR, /**< base IPI address */
+	SHM_BASE_ADDR, /**< shared memory base address */
+	TTC0_BASE_ADDR, /**< base TTC0 address */
 };
 
 struct metal_device metal_dev_table[] = {
@@ -71,7 +75,7 @@ struct metal_device metal_dev_table[] = {
 		1,
 		{
 			{
-				(void *)0xFF310000,
+				(void *)IPI_BASE_ADDR,
 				&metal_phys[0],
 				0x1000,
 				(sizeof(metal_phys_addr_t) << 3),
@@ -86,15 +90,15 @@ struct metal_device metal_dev_table[] = {
 
 	},
 	{
-		/* Shared memory0 management device */
-		"3ed00000.shm_desc",
+		/* Shared memory management device */
+		"3ed00000.shm",
 		NULL,
 		1,
 		{
 			{
-				(void *)0x3ED00000,
+				(void *)SHM_BASE_ADDR,
 				&metal_phys[1],
-				0x1000,
+				0x60000,
 				(sizeof(metal_phys_addr_t) << 3),
 				(unsigned long)(-1),
 				NORM_SHARED_NCACHE | PRIV_RW_USER_RW,
@@ -107,13 +111,13 @@ struct metal_device metal_dev_table[] = {
 
 	},
 	{
-		/* Shared memory1 management device */
-		"3ed10000.shm_desc",
+		/* ttc 0 */
+		"ff110000.ttc",
 		NULL,
 		1,
 		{
 			{
-				(void *)0x3ED10000,
+				(void *)TTC0_BASE_ADDR ,
 				&metal_phys[2],
 				0x1000,
 				(sizeof(metal_phys_addr_t) << 3),
@@ -124,28 +128,7 @@ struct metal_device metal_dev_table[] = {
 		},
 		{NULL},
 		0,
-		NULL,
-
-	},
-	{
-		/* Shared memory management device */
-		"3ed20000.shm",
-		NULL,
-		1,
-		{
-			{
-				(void *)0x3ED20000,
-				&metal_phys[3],
-				0x40000,
-				(sizeof(metal_phys_addr_t) << 3),
-				(unsigned long)(-1),
-				NORM_SHARED_NCACHE | PRIV_RW_USER_RW,
-				{NULL},
-			}
-		},
-		{NULL},
-		0,
-		NULL,
+		(void *)TTC0_IRQ_VECT_ID,
 
 	},
 };
@@ -271,6 +254,7 @@ int platform_register_metal_device (void)
 int sys_init()
 {
 	struct metal_init_params metal_param = METAL_INIT_DEFAULTS;
+
 	int ret;
 	enable_caches();
 	init_uart();

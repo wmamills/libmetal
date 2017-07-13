@@ -10,7 +10,13 @@ set (_src_common ${CMAKE_CURRENT_SOURCE_DIR}/init_${PROJECT_SYSTEM}.c)
 foreach (_app libmetal_amp_demo libmetal_amp_demod)
   set (_src ${CMAKE_CURRENT_SOURCE_DIR}/${_app}.c)
   list(APPEND _src ${_src_common})
-
+  list(APPEND _src ${CMAKE_CURRENT_SOURCE_DIR}/tasks.h)
+  list(APPEND _src ${CMAKE_CURRENT_SOURCE_DIR}/shmem_atomic_task.c)
+  list(APPEND _src ${CMAKE_CURRENT_SOURCE_DIR}/ipi_latency_task.c)
+  list(APPEND _src ${CMAKE_CURRENT_SOURCE_DIR}/ipi_shmem_task.c)
+  list(APPEND _src ${CMAKE_CURRENT_SOURCE_DIR}/shmem_task.c)
+  list(APPEND _src ${CMAKE_CURRENT_SOURCE_DIR}/shmem_latency_task.c)
+  list(APPEND _src ${CMAKE_CURRENT_SOURCE_DIR}/shmem_throughput_task.c)
   if (WITH_SHARED_LIB)
     add_executable (${_app}-share ${_src})
     if (PROJECT_EC_FLAGS)
@@ -36,3 +42,4 @@ foreach (_app libmetal_amp_demo libmetal_amp_demod)
 endforeach (_app)
 
 # vim: expandtab:ts=2:sw=2:smartindent
+

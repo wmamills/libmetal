@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Xilinx Inc. and Contributors. All rights reserved.
+ * Copyright (c) 2017, Xilinx Inc. and Contributors. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -35,11 +35,19 @@
   * setup shared memory with libmetal API for communication between processors.
   *
   * This app does the following:
-  * 1.  In the main application it does the following,
-  *     * open the registered libmetal devices: IPI device, shared memory
-  *       descriptor device and shared memory device.
-  * 2.  Register the IPI interrupt handler with libmetal.
-  * 3.  Run the atomic demo task ipi_task_shm_atomic():
+  * 1.  Run the shared memory echo demo task ipi_shmem_task()
+  *     * Write message to the APU to RPU shared buffer.
+  *     * Update the APU to RPU shared memory available index.
+  *     * Trigger IPI to the remote.
+  *     * Repeat the above 3 sub steps until it sends all the packages.
+  *     * Wait for IPI to receive all the packages
+  *     * If "shutdown" message is received, cleanup the libmetal source.
+  * 2.  Run shared memory demo with shmem_task().
+  *     * Open shared memory device.
+  *     * For 1000 times, communicate between local and remote processes
+  *       using shared memory and polling via shared memory.
+  *     * Cleanup shared memory device.
+  * 3.  Run the atomic demo task atomic_shmem_task():
   *     * Trigger the IPI to the remote, the remote will then start doing atomic
   *       add calculation.
   *     * Start atomic add by 1 for 1000 times to the first 32bit of the shared
@@ -47,108 +55,31 @@
   *     * Once it receives the IPI interrupt, it will check if the value stored
   *       in the shared memory descriptor location is 2000. If yes, the atomic
   *       across the shared memory passed, otherwise, it failed.
-  * 4.  Run the shared memory echo demo task ipi_task_echo()
-  *     * Write message to the APU to RPU shared buffer.
-  *     * Update the APU to RPU shared memory available index.
-  *     * Trigger IPI to the remote.
-  *     * Repeat the above 3 sub steps until it sends all the packages.
-  *     * Wait for IPI to receive all the packages
-  *     * If "shutdown" message is received, cleanup the libmetal source.
+  * 4.  Demonstrate IPI latency with ipi_latency_demo_task()
+  *     * Open IPI and timer devices.
+  *     * For 1000 times, record APU to RPU IPI latency and RPU to APU
+  *     latency. Then report average time for each direction.
+  *     * Cleanup libmetal resources
+  * 5.  Demonstrate shared memory latency with shmem_latency_demo_task()
+  *     * Open shared memory and timer devices.
+  *     * For 1000 times, record APU to RPU shared memory latency and RPU to APU
+  *     latency for 8 bytes, 1/2K and 1K. Then report average time for each direction.
+  *     * Cleanup libmetal resources
+  * 6.  Demonstrate shared memory throughput with shmem_throughput_demo_task()
+  *     * Open shared memory, IPI and timer devices.
+  *     * For 1000 times, record APU block read and write times. Notify remote to run 
+  *       test, then similarly record RPU block read and write times for 1/2K, 1K and 
+  *       2K. Then report average throughput for each data size and operation.
+  *     * Cleanup libmetal resources
   */
-#include <unistd.h>
 
-#include <metal/sys.h>
-#include <metal/device.h>
-#include <metal/irq.h>
-#include <metal/atomic.h>
-#include <metal/cpu.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <stdio.h>
-#include <time.h>
+#include <metal/io.h>
+#include <metal/device.h>
 
-#define IPI_TRIG_OFFSET 0x0
-#define IPI_OBS_OFFSET  0x4
-#define IPI_ISR_OFFSET  0x10
-#define IPI_IMR_OFFSET  0x14
-#define IPI_IER_OFFSET  0x18
-#define IPI_IDR_OFFSET  0x1C
+#include "tasks.h"
 
-#define IPI_MASK        0x100
-
-#define IPI_DEV_NAME    "ff340000.ipi"
-#define SHM0_DESC_DEV_NAME    "3ed00000.shm_desc"
-#define SHM1_DESC_DEV_NAME    "3ed10000.shm_desc"
-#define SHM_DEV_NAME    "3ed20000.shm"
-#define BUS_NAME        "platform"
-#define D0_SHM_OFFSET   0x00000
-#define D1_SHM_OFFSET   0x20000
-
-#define NS_PER_S        (1000 * 1000 * 1000)
-
-#define PKGS_TOTAL 1024
-
-#define BUF_SIZE_MAX 512
-#define SHUTDOWN "shutdown"
-
-#define LPRINTF(format, ...) \
-	printf("CLIENT> " format, ##__VA_ARGS__)
-
-struct shm_mg_s {
-	uint32_t avails;
-	uint32_t used;
-};
-
-typedef uint64_t shm_addr_t;
-
-struct msg_hdr_s {
-	uint32_t index;
-	uint32_t len;
-};
-
-struct channel_s {
-	struct metal_device *ipi_dev;
-	struct metal_io_region *ipi_io;
-	unsigned int ipi_mask;
-	struct metal_device *shm0_desc_dev;
-	struct metal_io_region *shm0_desc_io;
-	struct metal_device *shm1_desc_dev;
-	struct metal_io_region *shm1_desc_io;
-	struct metal_device *shm_dev;
-	struct metal_io_region *shm_io;
-	atomic_int notified;
-	unsigned long d0_start_offset;
-	unsigned long d1_start_offset;
-};
-
-static struct channel_s ch0;
-
-extern int system_init();
-extern int run_comm_task(void *task, void *arg);
-
-/**
- * @breif get_timestamp() - Get the timestamp
- *        IT gets the timestamp and return nanoseconds.
- *
- * @return nano seconds.
- */
-static unsigned long long get_timestamp (void)
-{
-	unsigned long long t = 0;
-	struct timespec tp;
-	int r;
-
-	r = clock_gettime(CLOCK_MONOTONIC, &tp);
-	if (r == -1) {
-		LPRINTF("ERROR: Bad clock_gettime!\n");
-		return t;
-	} else {
-		t = tp.tv_sec * (NS_PER_S);
-		t += tp.tv_nsec;
-	}
-	return t;
-}
+static struct channel_s channel; /* channel holding devices, and information needed for demos */
 
 /**
  * @brief ipi_irq_isr() - IPI interrupt handler
@@ -159,19 +90,19 @@ static unsigned long long get_timestamp (void)
  *
  * @return - If the IPI interrupt is triggered by its remote, it returns
  *          METAL_IRQ_HANDLED. It returns METAL_IRQ_NOT_HANDLED, if it is
- *          not the interupt it expected.
+ *          not the interrupt it expected.
  */
 static int ipi_irq_isr (int vect_id, void *priv)
 {
-	(void) vect_id;
+	
+	(void)vect_id;
 	struct channel_s *ch = (struct channel_s *)priv;
 	uint64_t val = 1;
-
-	if (!priv)
+	if (!ch)
 		return METAL_IRQ_NOT_HANDLED;
 	val = metal_io_read32(ch->ipi_io, IPI_ISR_OFFSET);
-	if (val & ch->ipi_mask) {
-		metal_io_write32(ch->ipi_io, IPI_ISR_OFFSET, ch->ipi_mask);
+	if (val & IPI_MASK) {
+		metal_io_write32(ch->ipi_io, IPI_ISR_OFFSET, IPI_MASK);
 		atomic_flag_clear(&ch->notified);
 		return METAL_IRQ_HANDLED;
 	}
@@ -179,383 +110,364 @@ static int ipi_irq_isr (int vect_id, void *priv)
 }
 
 /**
- * @brief   ipi_task_shm_atomic() - Shared memory atomic operation demo
- *          This task will:
- *          * Trigger IPI to notifty the remote to start atmoic add on the
- *            shared memory descriptor memory for 1000 times.
- *          * Start atomic add by 1 for 1000 times to the first 32bit of the
- *            shared memory descriptor location.
- *          * Wait for the remote to trigger IPI
- *          * Once it received the IPI kick from the remote, it will check if
- *            the value stored in the shared memory for the atomic add is 2000.
- *          * It will print if the atomic add test has passed or not.
  *
- * @param[in] arg - channel information
+ * @brief stop_timer() - function to stop TTC timer
+ *        Turn on the disable bit in the Count Control Reg, which 
+ *      results in the timer to stop counting. 
+ *
+ * @param[in]     offset - offset to one of the 3 timers in the TTC
+ * @param[in]     ch - channel pointing to timer
  */
-static void *ipi_task_shm_atomic(void *arg)
+static void stop_timer(struct channel_s*ch, uint32_t offset)
 {
-	int i;
-	atomic_int *shm_int;
-	struct channel_s *ch = (struct channel_s *)arg;
+	uint32_t val;
 
-	shm_int = (atomic_int *)metal_io_virt(ch->shm0_desc_io, 0);
-	atomic_store(shm_int, 0);
-
-	LPRINTF("Start shm atomic testing...\n");
-	/* Kick the remote to start counting */
-	metal_io_write32(ch->ipi_io, IPI_TRIG_OFFSET, ch->ipi_mask);
-	for (i = 0; i < 1000; i++) {
-		atomic_fetch_add(shm_int, 1);
-	}
-
-	do {
-		if (!atomic_flag_test_and_set(&ch->notified)) {
-			metal_cpu_yield();
-			break;
-		}
-	} while(1);
-	if (atomic_load(shm_int) == 2000) {
-		LPRINTF("shm atomic testing PASS!\n");
-	} else {
-		LPRINTF("shm atomic testing FAILED. actual: %u\n", atomic_load(shm_int));
-	}
-
-	return NULL;
+	val = metal_io_read32(ch->timer_io, offset + XTTCPS_CNT_CNTRL_OFFSET);
+	metal_io_write32(ch->timer_io, offset + XTTCPS_CNT_CNTRL_OFFSET, 
+		val | XTTCPS_CNT_CNTRL_DIS_MASK);
 }
 
 /**
- * @brief   ipi_task_echo() - shared memory ping-pong demo
- *          This task will:
- *          * Get the timestamp and put it into the ping shared memory
- *          * Update the shared memory descriptor for the new available
- *            ping buffer.
- *          * Trigger IPI to notifty the remote.
- *          * Repeat the above steps until it sends out all the packages.
- *          * Monitor IPI interrupt, verify every received package.
- *          * After all the packages are received, it sends out shutdown
- *            message to the remote.
+ * @brief ipi_irq_handler() - IPI interrupt handler
+ *        It will clear the notified flag to mark it's got an IPI interrupt.
+ *      Additionally, the IPI handler thread will stop the RPU->APU timer to 
+ *      further increase the accuracy of IPI latency measurement.
  *
- * @param[in] arg - channel information
+ * @param[in]     vect_id - IPI interrupt vector ID
+ * @param[in/out] priv    - communication channel data for this application.
+ *
+ * @return - If the IPI interrupt is triggered by its remote, it returns
+ *          METAL_IRQ_HANDLED. It returns METAL_IRQ_NOT_HANDLED, if it is
+ *          not the interrupt it expected.
  */
-static void *ipi_task_echo(void *arg)
+static int ipi_irq_handler (int vect_id, void *priv)
 {
-	int i;
-	struct channel_s *ch = (struct channel_s *)arg;
-	struct shm_mg_s *shm0_mg, *shm1_mg;
-	shm_addr_t *shm0_addr_array, *shm1_addr_array;
-	struct msg_hdr_s *msg_hdr, *msg_hdr_echo;
-	void *d0, *d1, *lbuf, *tmpptr;
-	metal_phys_addr_t d1_pa;
-	unsigned long long tstart, tend;
-	long long tdiff;
-	long long tdiff_avg_s = 0, tdiff_avg_ns = 0;
+	(void)vect_id;
+	struct channel_s *ch = (struct channel_s *)priv;
+	uint64_t val = 1;
 
-	shm0_mg = (struct shm_mg_s *)metal_io_virt(ch->shm0_desc_io, 0);
-	shm1_mg = (struct shm_mg_s *)metal_io_virt(ch->shm1_desc_io, 0);
-	shm0_addr_array = (void *)shm0_mg + sizeof(struct shm_mg_s);
-	shm1_addr_array = (void *)shm1_mg + sizeof(struct shm_mg_s);
-	d0 = metal_io_virt(ch->shm_io, ch->d0_start_offset);
-	lbuf = malloc(BUF_SIZE_MAX);
-	if (!lbuf) {
-		LPRINTF("ERROR: Failed to allocate local buffer for msg.\n");
-		return NULL;
+	if (!ch)
+		return METAL_IRQ_NOT_HANDLED;
+	val = metal_io_read32(ch->ipi_io, IPI_ISR_OFFSET);
+	if (val & ch->ipi_mask) {
+		/* stop RPU -> APU timer */
+		stop_timer(ch, RPU_TO_APU_TIMER_OFFSET);
+		metal_io_write32(ch->ipi_io, IPI_ISR_OFFSET, ch->ipi_mask);
+		atomic_flag_clear(&ch->notified);
+		return METAL_IRQ_HANDLED;
 	}
 
-	LPRINTF("Start echo flood testing....\n");
-	LPRINTF("It sends msgs to the remote.\n");
-	LPRINTF("And then it waits for msgs to echo back and verifiy.\n");
-	/* Clear shared memory descriptors of both directions */
-	shm0_mg->avails = 0;
-	shm0_mg->used = 0;
-	shm1_mg->avails = 0;
-	shm1_mg->used = 0;
-	for (i = 0; i < PKGS_TOTAL; i++) {
-		/* Construct a message to send */
-		tmpptr = lbuf;
-		msg_hdr = tmpptr;
-		msg_hdr->index = i;
-		msg_hdr->len = sizeof(tstart);
-		tmpptr += sizeof(struct msg_hdr_s);
-		tstart = get_timestamp();
-		*(unsigned long long *)tmpptr = tstart;
-
-		/* copy message to shared buffer */
-		metal_io_block_write(ch->shm_io,
-			metal_io_virt_to_offset(ch->shm_io, d0),
-			msg_hdr,
-			sizeof(struct msg_hdr_s) + msg_hdr->len);
-
-		/* Update the shared memory management information
-		 * Tell the other end where the d0 buffer is.
-		 */
-		shm0_addr_array[i] = (shm_addr_t)metal_io_virt_to_phys(
-				ch->shm_io, d0);
-		d0 += sizeof(struct msg_hdr_s) + msg_hdr->len;
-		shm0_mg->avails++;
-
-		/* memory barrier */
-		atomic_thread_fence(memory_order_acq_rel);
-
-		/* Send the message */
-		metal_io_write32(ch->ipi_io, IPI_TRIG_OFFSET, ch->ipi_mask);
-	}
-	i = 0;
-	d0 = metal_io_virt(ch->shm_io, ch->d0_start_offset);
-	while (shm1_mg->used != PKGS_TOTAL) {
-		do {
-			if (!atomic_flag_test_and_set(&ch->notified)) {
-				metal_cpu_yield();
-				break;
-			}
-		} while(1);
-		atomic_thread_fence(memory_order_acq_rel);
-		while ((shm1_mg->used != PKGS_TOTAL) &&
-			(shm1_mg->used != shm1_mg->avails)) {
-			/* Received pong from the other side */
-
-			/* Get the d1 buffer location from the shared memory
-			 * management.
-			 */
-			d1_pa = (metal_phys_addr_t)shm1_addr_array[shm1_mg->used];
-			d1 = metal_io_phys_to_virt(ch->shm_io, d1_pa);
-			if (!d1) {
-				LPRINTF("ERROR: failed to get rx address: 0x%lx.\n",
-					d1_pa);
-				goto out;
-			}
-			msg_hdr_echo = (struct msg_hdr_s *)d1;
-
-			/* Verify the message */
-			if (msg_hdr_echo->index != (uint32_t)i) {
-				LPRINTF("ERROR: wrong msg: expected: %d, actual: %d\n",
-					i, msg_hdr_echo->index);
-				goto out;
-			}
-			d1 += sizeof(struct msg_hdr_s);
-			d0 += sizeof(struct msg_hdr_s);
-			if (*(unsigned long long *)d0 !=
-				*(unsigned long long *)d1) {
-				LPRINTF("ERROR: wrong message, [%d], %llu:%llu\n",
-					i, *(unsigned long long *)d0,
-					*(unsigned long long *)d1);
-				goto out;
-			}
-			d0 += msg_hdr_echo->len;
-			shm1_mg->used++;
-			i++;
-		}
-	}
-	tend = get_timestamp();
-	tdiff = tend - tstart;
-
-	/* Send shutdown message */
-	tmpptr = lbuf;
-	msg_hdr = tmpptr;
-	msg_hdr->index = i;
-	msg_hdr->len = strlen(SHUTDOWN);
-	tmpptr += sizeof(struct msg_hdr_s);
-	sprintf(tmpptr, SHUTDOWN);
-	/* copy message to shared buffer */
-	metal_io_block_write(ch->shm_io,
-		metal_io_virt_to_offset(ch->shm_io, d0),
-		msg_hdr,
-		sizeof(struct msg_hdr_s) + msg_hdr->len);
-
-	shm0_addr_array[i] = (uint64_t)metal_io_virt_to_phys(
-				ch->shm_io, d0);
-	shm0_mg->avails++;
-	atomic_thread_fence(memory_order_acq_rel);
-	LPRINTF("Sending shutdown message...\n");
-	metal_io_write32(ch->ipi_io, IPI_TRIG_OFFSET, ch->ipi_mask);
-
-	tdiff /= i;
-	tdiff_avg_s = tdiff / NS_PER_S;
-	tdiff_avg_ns = tdiff % NS_PER_S;
-	LPRINTF("Total packages: %d, time_avg = %lds, %ldns\n",
-		i, (long int)tdiff_avg_s, (long int)tdiff_avg_ns);
-
-out:
-	free(lbuf);
-	return NULL;
+	return METAL_IRQ_NOT_HANDLED;
 }
+
+
+/**
+ * @brief setup_timer() - function to initialize TTC timer
+ *        Sets a timer as follows:
+ *      -Set Max Interval Value to MAX_INTERVAL_VAL
+ *      -Disable Prescaler
+ *      -Set Max Interval Value to MAX_INTERVAL_VAL
+ *      -Disable Decrement mode
+ *      -Enable Interval mode
+ *
+ * @param[in]     timer_base_offset - offset to one of the 3 timers in the TTC
+ */
+static void setup_timer(struct channel_s* ch, uint32_t timer_base_offset)
+{
+	uint32_t val;
+
+	/* set max counter value */
+	metal_io_write32(ch->timer_io, 
+	timer_base_offset + XTTCPS_INTERVAL_VAL_OFFSET, MAX_INTERVAL_VAL); 
+
+	/* set clock control register */
+	metal_io_write32(ch->timer_io, 
+	timer_base_offset + XTTCPS_CLK_CNTRL_OFFSET, 0);
+
+	/* set clock operational mode */
+	val = 0;
+	/* enable interval mode */
+	val |= XTTCPS_CNT_CNTRL_INT_MASK;
+	metal_io_write32(ch->timer_io, 
+	timer_base_offset + XTTCPS_CNT_CNTRL_OFFSET, val);
+}
+
 
 /**
  * @brief    cleanup - cleanup the application
  *           The cleanup funciton will disable the IPI interrupt
  *           close the metal devices and finish the libmetal environment.
  */
-void cleanup(void)
+static void cleanup(void)
 {
 	int irq;
 	/* Disable IPI interrupt */
-	if (ch0.ipi_io) {
-		metal_io_write32(ch0.ipi_io, IPI_IDR_OFFSET, ch0.ipi_mask);
-		irq = (intptr_t)ch0.ipi_dev->irq_info;
-		metal_irq_register(irq, 0, ch0.ipi_dev, &ch0);
+	if (channel.ipi_io) {
+		metal_io_write32(channel.ipi_io, IPI_IDR_OFFSET, channel.ipi_mask);
+		irq = (intptr_t)channel.ipi_dev->irq_info;
+		metal_irq_register(irq, 0, channel.ipi_dev, &channel);
 	}
-	if (ch0.ipi_dev)
-		metal_device_close(ch0.ipi_dev);
-	if (ch0.shm0_desc_dev)
-		metal_device_close(ch0.shm0_desc_dev);
-	if (ch0.shm1_desc_dev)
-		metal_device_close(ch0.shm1_desc_dev);
-	if (ch0.shm_dev)
-		metal_device_close(ch0.shm_dev);
+	metal_io_block_set(channel.shm_io, 0, 0, SHM_SIZE);
+	if (channel.ipi_dev)
+		metal_device_close(channel.ipi_dev);
+	if (channel.shm_dev)
+		metal_device_close(channel.shm_dev);
+	if (channel.timer_device)
+		metal_device_close(channel.timer_device);
+	if (channel.timer_io)
+		metal_io_finish(channel.timer_io);
 	metal_finish();
 }
 
 /**
- * @brief    main function of the demo application.
- *           Here are the steps for the main function:
- *           * call system_init() function for system related initialization.
- *           * call metal_init() function to initialize libmetal environment.
- *           * Open the IPI, shared memory descriptors, and shared memory
- *             devices, and stored the I/O region.
- *           * Register the IPI interrupt handler.
- *           * Enable the IPI interrupt.
- *           * Run the atomic across shared memory task.
- *           * Run the echo demo with shared memory task.
- *           * cleanup the libmetal resource before return.
+ * @brief irq_handler_registration() - handle all steps of irq handler registration
+ *        It will disable interrupt, deregister other handlers, register the 
+ *        handler passed in, and then enable the interrupt.
+ *
+ * @param[in]     irq_handler - handler to register
+ * @param[in]     deregister - deregister other handlers
+ *
  * @return   0 - succeeded, non-zero for failures.
  */
-int main(void)
+static int irq_handler_registration( metal_irq_handler irq_handler, int deregister)
+{
+	int irq, ret;
+	uint32_t val;
+
+	/* Disable IPI interrupt */
+	metal_io_write32(channel.ipi_io, IPI_IDR_OFFSET, channel.ipi_mask);
+	LPRINTF("Disabled IPI interrupt.\n");
+
+	/* Get interrupt ID from IPI metal device */
+	irq = (intptr_t)channel.ipi_dev->irq_info;
+
+	LPRINTF("Try to deregister IPI interrupt handler.\n");
+	if (deregister){
+		ret = metal_irq_register(irq, 0, 0, 0);
+		LPRINTF("successfully deregistered IPI interrupt handler.\n");
+		if (ret){
+			LPERROR("Unable to deregister old irq handler handler.\n");
+			goto out;
+		}	
+	}
+	
+
+	LPRINTF("Try to register new IPI handler.\n");
+	ret =  metal_irq_register(irq, irq_handler, channel.ipi_dev, &channel);
+	if (ret){
+		LPERROR("Unable to register new irq handler.\n");
+		goto out;
+	}
+	LPRINTF("registered IPI handler.\n");
+	/* Enable interrupt */
+	metal_io_write32(channel.ipi_io, IPI_IER_OFFSET, channel.ipi_mask);
+	val = metal_io_read32(channel.ipi_io, IPI_IMR_OFFSET);
+	if (val & channel.ipi_mask) {
+		LPERROR("Failed to enable IPI interrupt.\n");
+		return -1;
+	}
+	LPRINTF("enabled IPI interrupt.\n");
+
+	out:
+	return ret;
+}
+
+static int ipi_init()
 {
 	struct metal_device *device;
 	struct metal_io_region *io;
-	int irq;
-	uint32_t val;
-	int ret = 0;
-	struct metal_init_params init_param = METAL_INIT_DEFAULTS;
-
-	if (system_init()) {
-		LPRINTF("ERROR: Failed to initialize system\n");
-		return -1;
-	}
-	if (metal_init(&init_param)) {
-		LPRINTF("ERROR: Failed to run metal initialization\n");
-		return -1;
-	}
-	memset(&ch0, 0, sizeof(ch0));
-	atomic_store(&ch0.notified, 1);
+	int ret;
 
 	/* Open IPI device */
 	ret = metal_device_open(BUS_NAME, IPI_DEV_NAME, &device);
 	if (ret) {
-		LPRINTF("ERROR: Failed to open device ff340000.ipi.\n");
-		goto out;
+		LPERROR("Failed to open device ff340000.ipi.\n");
+		return ret;
 	}
 
 	/* Map IPI device IO region */
 	io = metal_device_io_region(device, 0);
 	if (!io) {
-		LPRINTF("ERROR: Failed to map io regio for %s.\n",
-			  device->name);
+		LPERROR("Failed to map io regio for %s.\n",
+		device->name);
 		metal_device_close(device);
-		ret = -ENODEV;
-		goto out;
+		return -ENODEV;
 	}
 
 	/* Store the IPI device and I/O region */
-	ch0.ipi_dev = device;
-	ch0.ipi_io = io;
+	channel.ipi_dev = device;
+	channel.ipi_io = io;
+	channel.ipi_mask = IPI_MASK;
+	
+	return 0;
+}
 
-	/* Open shared memory0 descriptor device */
-	ret = metal_device_open(BUS_NAME, SHM0_DESC_DEV_NAME, &device);
+static int timer_init()
+{
+	struct metal_device *device;
+	struct metal_io_region *io;
+	int ret;
+
+	/* Open timer device */
+	ret = metal_device_open(BUS_NAME, TTC0_DEV_NAME, &device);
 	if (ret) {
-		LPRINTF("ERROR: Failed to open device %s.\n", SHM0_DESC_DEV_NAME);
-		goto out;
+		if (ret == -ENOMEM)
+		  LPERROR("-ENOMEM\n");
+		if (ret == -ENODEV)
+		  LPERROR("-ENODEV\n");
+
+		LPERROR("Failed to open device %s.\n", TTC0_DEV_NAME);
+		return ret;
 	}
 
-	/* Map shared memory0 descriptor device IO region */
+	/* Map timer device IO region */
 	io = metal_device_io_region(device, 0);
 	if (!io) {
-		LPRINTF("ERROR: Failed to map io regio for %s.\n",
-			  device->name);
+		LPERROR("Failed to map io region for %s.\n",
+			device->name);
 		metal_device_close(device);
-		ret = -ENODEV;
-		goto out;
+		return -ENODEV;
+	}
+	/* store timer device and I/O region */
+	channel.timer_device = device;
+	channel.timer_io = io;
+	setup_timer(&channel, TTC0_2_OFFSET);
+	setup_timer(&channel, TTC0_1_OFFSET);
+
+
+	if (!channel.timer_io){
+		LPERROR("unable to get timer device %s\n", TTC0_DEV_NAME);
+		return -EINVAL;
 	}
 
-	/* Store the shared memory device and I/O region */
-	ch0.shm0_desc_dev = device;
-	ch0.shm0_desc_io = io;
+	return 0;
+}
 
-	/* Open shared memory1 descriptor device */
-	ret = metal_device_open(BUS_NAME, SHM1_DESC_DEV_NAME, &device);
-	if (ret) {
-		LPRINTF("ERROR: Failed to open device %s.\n", SHM1_DESC_DEV_NAME);
-		goto out;
-	}
+/**
+ * @brief    setup - open and map shared memory devices for demo
+ * @return - return 0 on success, otherwise return error number indicating
+ *       type of error.
+ */
+static int setup(void)
+{
+	struct metal_device *device;
+	struct metal_io_region *io;
+	int ret = 0;
+	struct metal_init_params init_param = METAL_INIT_DEFAULTS;
 
-	/* Map shared memory0 descriptor device IO region */
-	io = metal_device_io_region(device, 0);
-	if (!io) {
-		LPRINTF("ERROR: Failed to map io regio for %s.\n",
-			  device->name);
-		metal_device_close(device);
-		ret = -ENODEV;
-		goto out;
+	if (metal_init(&init_param)) {
+		LPERROR("Failed to run metal initialization\n");
+		return -1;
 	}
-	/* Store the shared memory device and I/O region */
-	ch0.shm1_desc_dev = device;
-	ch0.shm1_desc_io = io;
+	memset(&channel, 0, sizeof(channel));
+	atomic_store(&channel.notified, 1);
 
 	/* Open shared memory device */
 	ret = metal_device_open(BUS_NAME, SHM_DEV_NAME, &device);
 	if (ret) {
-		LPRINTF("ERROR: Failed to open device %s.\n", SHM_DEV_NAME);
+		LPERROR("Failed to open device %s.\n", SHM_DEV_NAME);
 		goto out;
 	}
 
-	/* Map shared memory device IO region */
+	/* get shared memory device IO region */
 	io = metal_device_io_region(device, 0);
 	if (!io) {
-		LPRINTF("ERROR: Failed to map io regio for %s.\n",
-			  device->name);
+		LPERROR("Failed to get io region for %s.\n",
+		device->name);
 		metal_device_close(device);
 		ret = -ENODEV;
 		goto out;
 	}
 
 	/* Store the shared memory device and I/O region */
-	ch0.shm_dev = device;
-	ch0.shm_io = io;
-	ch0.d0_start_offset = D0_SHM_OFFSET;
+	channel.shm_dev = device;
+	channel.shm_io = io;
+	channel.d0_start_offset = D0_SHM_OFFSET;
 
-	/* Get interrupt ID from IPI metal device */
-	irq = (intptr_t)ch0.ipi_dev->irq_info;
-	if (irq < 0) {
-		LPRINTF("ERROR: Failed to request interrupt for %s.\n",
-			  device->name);
-		ret = -EINVAL;
-		goto out;
-	}
-
-	ch0.ipi_mask = IPI_MASK;
-	ret =  metal_irq_register(irq, ipi_irq_isr, ch0.ipi_dev, &ch0);
+	ret = ipi_init();
 	if (ret)
 		goto out;
 
-	/* Enable interrupt */
-	metal_io_write32(ch0.ipi_io, IPI_IER_OFFSET, ch0.ipi_mask);
-	val = metal_io_read32(ch0.ipi_io, IPI_IMR_OFFSET);
-	if (val & ch0.ipi_mask) {
-		LPRINTF("ERROR: Failed to enable IPI interrupt.\n");
-		ret = -1;
+	ret = timer_init();
+	if (ret)
 		goto out;
-	}
 
-	ret = run_comm_task(ipi_task_shm_atomic, &ch0);
+	out:
+	return ret;
+}
+
+/**
+ * @brief    main function of the demo application.
+ *           Here are the steps for the main function:
+ *           * Setup libmetal resources
+ *           * Run the IPI with shared memory task.
+ *           * Run the shared memory task.
+ *           * Run the atomic across shared memory task.
+ *           * Run the ipi latency task.
+ *           * Run the shared memory latency task.
+ *           * Run the shared memory throughput task.
+ *           * Cleanup libmetal resources
+ *           Report if any of the above tasks failed.
+ * @return   0 - succeeded, non-zero for failures.
+ */
+int main(void)
+{
+	int ret;
+
+	ret = setup();
+	if (ret)
+		return ret;
+	
+	ret = shmem_task(&channel);
 	if (ret) {
-		LPRINTF("ERROR: Failed to run shared memory atomic task.\n");
+		LPRINTF( "ERROR: Failed to run shared memory task.\n");
+		goto out;
+	}
+	ret = irq_handler_registration(ipi_irq_handler, 0);
+	if (ret){
+		LPERROR("Failed to register: ipi_irq_handler.\n");
+		goto out;
+	}
+	ret = atomic_shmem_task(&channel);
+	if (ret) {
+		LPRINTF( "ERROR: Failed to run atomics with shared memory task.\n");
 		goto out;
 	}
 
-	ret = run_comm_task(ipi_task_echo, &ch0);
-	if (ret)
-		LPRINTF("ERROR: Failed to run IPI communication task.\n");
 
-out:
+	ret = ipi_shmem_task(&channel);
+	if (ret) {
+		LPRINTF( "ERROR: Failed to run IPI shared memory task.\n");
+		goto out;
+	}
+	ret = ipi_latency_demo_task(&channel);
+	if (ret) {
+		LPERROR("Failed to run IPI latency task.\n");
+		goto out;
+	}
+	/* 
+	shared memory latency and throughput tests need a
+	timer to stop outside of irq handler, so deregister
+	current handler and register new irq handler that doesn't stop 
+	a timer. 
+	*/ 
+	irq_handler_registration(ipi_irq_isr,1);
+	if (ret){
+		LPERROR("Failed to register handler for shared memory throughput task.\n");
+		goto out;
+	}
+	ret = shmem_throughput_demo_task(&channel);
+	if (ret) {
+		LPERROR("Failed to run shared mem. throughput task.\n");
+		goto out;
+	}
+	ret = shmem_latency_demo_task(&channel);
+	if (ret) {
+		LPERROR("Failed to run shared mem. latency task.\n");
+		goto out;
+	}
+
+	out:
 	cleanup();
 
 	return ret;
