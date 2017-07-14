@@ -362,6 +362,8 @@ int metal_io_block_write(struct metal_io_region *io, unsigned long offset,
 int metal_io_block_set(struct metal_io_region *io, unsigned long offset,
 	       unsigned char value, int len);
 
+/** @} */
+
 #ifdef __cplusplus
 }
 #endif
