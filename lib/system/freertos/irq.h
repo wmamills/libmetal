@@ -46,7 +46,7 @@ extern "C" {
 
 /**
  * @brief      default interrupt handler 
- * @param[in]  interrupt vector
+ * @param[in]  vector interrupt vector
  */
 void metal_irq_isr(unsigned int vector);
 

@@ -51,7 +51,7 @@ extern "C" {
 
 /**
  * @brief	type of interrupt handler
- * @param[in]   interrupt id
+ * @param[in]   irq interrupt id
  * @param[in]	priv private data
  * @return      irq handled status
  */
