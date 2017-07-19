@@ -40,6 +40,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include "sys_init.h"
 
 #define IPI_TRIG_OFFSET 0x0
 #define IPI_OBS_OFFSET  0x4
@@ -114,7 +115,7 @@ static int ipi_irq_isr (int vect_id, void *priv)
 	return METAL_IRQ_NOT_HANDLED;
 }
 
-static void *ipi_task_shm_atomicd(void *arg)
+static int ipi_task_shm_atomicd(void *arg)
 {
 	struct channel_s *ch = (struct channel_s *)arg;
 	atomic_int *shm_int;
@@ -146,10 +147,10 @@ static void *ipi_task_shm_atomicd(void *arg)
 		break;
 	}
 
-	return NULL;
+	return 0;
 }
 
-static void *ipi_task_echod(void *arg)
+static int ipi_task_echod(void *arg)
 {
 	struct channel_s *ch = (struct channel_s *)arg;
 	struct shm_mg_s *shm0_mg, *shm1_mg;
@@ -168,7 +169,7 @@ static void *ipi_task_echod(void *arg)
 	lbuf = malloc(BUF_SIZE_MAX);
 	if (!lbuf) {
 		LPRINTF("ERROR: Failed to allocate local buffer for msg.\n");
-		return NULL;
+		return -1;
 	}
 
 	LPRINTF("Wait for echo test to start.\n");
@@ -246,7 +247,7 @@ static void *ipi_task_echod(void *arg)
 
 out:
 	free(lbuf);
-	return NULL;
+	return 0;
 }
 
 int main(void)
@@ -256,14 +257,10 @@ int main(void)
 	int irq;
 	uint32_t val;
 	int ret = 0;
-	struct metal_init_params init_param = METAL_INIT_DEFAULTS;
 
-	if (system_init()) {
+	ret = sys_init();
+	if (ret) {
 		LPRINTF("ERROR: Failed to initialize system\n");
-		return -1;
-	}
-	if (metal_init(&init_param)) {
-		LPRINTF("ERROR: Failed to run metal initialization\n");
 		return -1;
 	}
 	memset(&ch0, 0, sizeof(ch0));
@@ -381,12 +378,12 @@ int main(void)
 		goto out;
 	}
 	LPRINTF("enabled IPI interrupt.\n");
-	ret = run_comm_task(ipi_task_shm_atomicd, &ch0);
+	ret = ipi_task_shm_atomicd((void *)&ch0);
 	if (ret) {
 		LPRINTF("ERROR: Failed to run shared memory atomic task.\n");
 		goto out;
 	}
-	ret = run_comm_task(ipi_task_echod, &ch0);
+	ret = ipi_task_echod((void*)&ch0);
 	if (ret)
 		LPRINTF("ERROR: Failed to run IPI communication task.\n");
 
@@ -399,7 +396,7 @@ out:
 		metal_device_close(ch0.shm1_desc_dev);
 	if (ch0.shm_dev)
 		metal_device_close(ch0.shm_dev);
-	metal_finish();
+	sys_cleanup();
 
 	return ret;
 }

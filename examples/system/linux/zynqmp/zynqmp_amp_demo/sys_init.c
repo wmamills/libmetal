@@ -30,21 +30,24 @@
  */
 
 #include <stdio.h>
-#include <signal.h>
 #include <unistd.h>
-#include <pthread.h>
 #include "metal/sys.h"
+#include "common.h"
 
-typedef void *(*task_to_run)(void *arg);
-int run_comm_task(task_to_run task, void *arg)
+int sys_init()
 {
-	task(arg);
-	return 0;
+	struct metal_init_params init_param = METAL_INIT_DEFAULTS;
+	int ret;
+
+	ret = metal_init(&init_param);
+	if (ret)
+		LPERROR("Failed to initialize libmetal\n");
+	return ret;
 }
 
-int system_init()
+void sys_cleanup()
 {
-	return 0;
+	metal_finish();
 }
 
 void wait_for_interrupt(void) {
