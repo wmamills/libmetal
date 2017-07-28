@@ -173,7 +173,7 @@ int shmem_throughput_demo();
  *
  * @param[in] notified - pointer to the notified variable
  */
-inline void  wait_for_notified(atomic_int *notified)
+static inline void  wait_for_notified(atomic_int *notified)
 {
 	unsigned int flags;
 
@@ -195,7 +195,7 @@ inline void  wait_for_notified(atomic_int *notified)
  * @param[in] buf - pointer to the buffer
  * @param[in] len - len of the buffer
  */
-inline void dump_buffer(void *buf, unsigned int len)
+static inline void dump_buffer(void *buf, unsigned int len)
 {
 	unsigned int i;
 	unsigned char *tmp = (unsigned char *)buf;
@@ -213,7 +213,7 @@ inline void dump_buffer(void *buf, unsigned int len)
  *
  * @param[in] name - demo name
  */
-inline void print_demo(char *name)
+static inline void print_demo(char *name)
 {
 	LPRINTF("****** libmetal demo: %s ******\n", name);
 }

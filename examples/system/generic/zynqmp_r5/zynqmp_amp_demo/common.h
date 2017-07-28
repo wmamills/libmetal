@@ -157,7 +157,7 @@ int shmem_latency_demod();
  */
 int shmem_throughput_demod();
 
-inline void wait_for_interrupt()
+static inline void wait_for_interrupt()
 {
 	asm volatile("wfi");
 }
@@ -168,7 +168,7 @@ inline void wait_for_interrupt()
  *
  * @param[in] notified - pointer to the notified variable
  */
-inline void  wait_for_notified(atomic_int *notified)
+static inline void  wait_for_notified(atomic_int *notified)
 {
 	unsigned int flags;
 
@@ -188,7 +188,7 @@ inline void  wait_for_notified(atomic_int *notified)
  *
  * @param[in] name - demo name
  */
-inline void print_demo(char *name)
+static inline void print_demo(char *name)
 {
 	LPRINTF("====== libmetal demo: %s ======\n", name);
 }
