@@ -40,7 +40,7 @@
 #include "metal/io.h"
 #include "metal/list.h"
 #include "metal/dma.h"
-#include "metal/sys.h" 
+#include "metal/sys.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -93,13 +93,15 @@ extern struct metal_bus metal_generic_bus;
 
 /** Libmetal device structure. */
 struct metal_device {
-	const char		*name;
-	struct metal_bus	*bus;
-	unsigned		num_regions;
-	struct metal_io_region	regions[METAL_MAX_DEVICE_REGIONS];
-	struct metal_list	node;
-	int                     irq_num;
-	void                    *irq_info;
+	const char             *name; /**< Device name */
+	struct metal_bus       *bus; /**< Bus that contains device */
+	unsigned               num_regions; /**< Number of I/O regions in
+					      device */
+	struct metal_io_region regions[METAL_MAX_DEVICE_REGIONS]; /**< Array of
+                                                        I/O regions in device*/
+	struct metal_list	node; /**< Node on bus' list of devices */
+	int                     irq_num; /**< Number of IRQs per device */
+	void                    *irq_info; /**< IRQ ID */
 };
 
 /**
