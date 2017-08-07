@@ -183,8 +183,6 @@ static int ipi_irq_handler (int vect_id, void *priv)
 	if (ch) {
 		val = metal_io_read32(ch->ipi_io, IPI_ISR_OFFSET);
 		if (val & ch->ipi_mask) {
-			/* stop RPU -> APU timer */
-			stop_timer(ch->ttc_io, TTC_CNT_RPU_TO_APU);
 			metal_io_write32(ch->ipi_io, IPI_ISR_OFFSET,
 					ch->ipi_mask);
 			atomic_flag_clear(&ch->remote_nkicked);
