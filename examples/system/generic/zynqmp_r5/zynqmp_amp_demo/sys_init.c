@@ -238,7 +238,6 @@ int platform_register_metal_device(void)
 	int ret;
 	struct metal_device *dev;
 
-	metal_bus_register(&metal_generic_bus);
 	for (i = 0; i < sizeof(metal_dev_table)/sizeof(struct metal_device);
 	     i++) {
 		dev = &metal_dev_table[i];
