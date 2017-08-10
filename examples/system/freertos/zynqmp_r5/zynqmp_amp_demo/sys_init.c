@@ -59,7 +59,7 @@
 #define TTC0_BASE_ADDR  0xFF110000
 #define IPI_BASE_ADDR   0xFF310000
 
-extern XScuGic xInterruptController;
+static XScuGic xInterruptController;
 
 const metal_phys_addr_t metal_phys[] = {
 	IPI_BASE_ADDR, /**< base IPI address */
@@ -98,7 +98,7 @@ static struct metal_device metal_dev_table[] = {
 			{
 				(void *)SHM_BASE_ADDR,
 				&metal_phys[1],
-				0x800000,
+				0x1000000,
 				(sizeof(metal_phys_addr_t) << 3),
 				(unsigned long)(-1),
 				NORM_SHARED_NCACHE | PRIV_RW_USER_RW,

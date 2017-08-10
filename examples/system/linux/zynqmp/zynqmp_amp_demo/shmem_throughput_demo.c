@@ -56,12 +56,12 @@
  *     disable IPI interrupt and deregister the IPI interrupt handler.
  *
  * Here is the Shared memory structure of this demo:
- * |0x0   - 0x03        | number of APU to RPU buffers available to RPU |
- * |0x04  - 0x1FFC      | address array for shared buffers from APU to RPU |
- * |0x2000 - 0x2003     | number of RPU to APU buffers available to APU |
- * |0x2004 - 0x3FFC     | address array for shared buffers from RPU to APU |
- * |0x04000 - 0x103FFC  | APU to RPU buffers |
- * |0x104000 - 0x203FFC | RPU to APU buffers |
+ * |0x0   - 0x03         | number of APU to RPU buffers available to RPU |
+ * |0x04  - 0x1FFFFF     | address array for shared buffers from APU to RPU |
+ * |0x200000 - 0x200004  | number of RPU to APU buffers available to APU |
+ * |0x200004 - 0x3FFFFF  | address array for shared buffers from RPU to APU |
+ * |0x400000 - 0x7FFFFF  | APU to RPU buffers |
+ * |0x800000 - 0xAFFFFF  | RPU to APU buffers |
  */
 
 #include <unistd.h>
@@ -81,9 +81,9 @@
 
 /* Shared memory offsets */
 #define SHM_DESC_OFFSET_TX 0x0
-#define SHM_BUFF_OFFSET_TX 0x04000
-#define SHM_DESC_OFFSET_RX 0x02000
-#define SHM_BUFF_OFFSET_RX 0x104000
+#define SHM_BUFF_OFFSET_TX 0x400000
+#define SHM_DESC_OFFSET_RX 0x200000
+#define SHM_BUFF_OFFSET_RX 0x800000
 
 /* Shared memory descriptors offset */
 #define SHM_DESC_AVAIL_OFFSET 0x00
@@ -94,6 +94,7 @@
 #define BUF_SIZE_MAX 4096
 #define PKG_SIZE_MAX 1024
 #define PKG_SIZE_MIN 16
+#define TOTAL_DATA_SIZE (1024 * 4096)
 
 #define MB (1024 * 1024) /* Mega Bytes */
 
@@ -219,7 +220,7 @@ static int measure_shmem_throughput(struct channel_s* ch)
 	void *lbuf = NULL;
 	int ret = 0;
 	size_t s, i;
-	uint32_t rx_count, rx_avail, tx_count;
+	uint32_t rx_count, rx_avail, tx_count, iterations;
 	unsigned long tx_avail_offset, rx_avail_offset;
 	unsigned long tx_addr_offset, rx_addr_offset;
 	unsigned long tx_data_offset, rx_data_offset;
@@ -257,6 +258,7 @@ static int measure_shmem_throughput(struct channel_s* ch)
 	/* for each data size, measure send throughput */
 	for (s = PKG_SIZE_MIN, i = 0; s <= PKG_SIZE_MAX; s <<= 1, i++) {
 		tx_count = 0;
+		iterations = TOTAL_DATA_SIZE / s;
 		/* Set tx buffer address offset */
 		tx_avail_offset = SHM_DESC_OFFSET_TX + SHM_DESC_AVAIL_OFFSET;
 		tx_addr_offset = SHM_DESC_OFFSET_TX +
@@ -264,7 +266,7 @@ static int measure_shmem_throughput(struct channel_s* ch)
 		tx_data_offset = SHM_DESC_OFFSET_TX + SHM_BUFF_OFFSET_TX;
 		/* Reset APU TTC counter */
 		reset_timer(ch->ttc_io, TTC_CNT_APU_TO_RPU);
-		while (tx_count < ITERATIONS) {
+		while (tx_count < iterations) {
 			/* Write data to the shared memory*/
 			metal_io_block_write(ch->shm_io, tx_data_offset,
 					lbuf, s);
@@ -305,6 +307,7 @@ static int measure_shmem_throughput(struct channel_s* ch)
 	/* for each data size, meaasure block read throughput */
 	for (s = PKG_SIZE_MIN, i = 0; s <= PKG_SIZE_MAX; s <<= 1, i++) {
 		rx_count = 0;
+		iterations = TOTAL_DATA_SIZE / s;
 		/* Set rx buffer address offset */
 		rx_avail_offset = SHM_DESC_OFFSET_RX + SHM_DESC_AVAIL_OFFSET;
 		rx_addr_offset = SHM_DESC_OFFSET_RX +
@@ -340,7 +343,7 @@ static int measure_shmem_throughput(struct channel_s* ch)
 						lbuf, s);
 				rx_count++;
 			}
-			if (rx_count < ITERATIONS)
+			if (rx_count < iterations)
 				/* Need to wait for more data */
 				wait_for_notified(&ch->remote_nkicked);
 			else
@@ -366,14 +369,14 @@ static int measure_shmem_throughput(struct channel_s* ch)
 	/* Print the measurement result */
 	for (s = PKG_SIZE_MIN, i = 0; s <= PKG_SIZE_MAX; s <<= 1, i++) {
 		LPRINTF("Shared memory throughput of pkg size %lu : \n", s);
-		LPRINTF("    APU send: %lu MB/s\n",
-			s * ITERATIONS * TTC_CLK_FREQ_HZ / apu_tx_count[i] / MB); 
-		LPRINTF("    APU receive: %lu MB/s\n",
-			s * ITERATIONS * TTC_CLK_FREQ_HZ / apu_rx_count[i] / MB); 
-		LPRINTF("    RPU send: %lu MB/s\n",
-			s * ITERATIONS * TTC_CLK_FREQ_HZ / rpu_tx_count[i] / MB); 
-		LPRINTF("    RPU receive: %lu MB/s\n",
-			s * ITERATIONS * TTC_CLK_FREQ_HZ / rpu_rx_count[i] / MB); 
+		LPRINTF("    APU send: %x, %lu MB/s\n", apu_tx_count[i],
+			s * iterations * TTC_CLK_FREQ_HZ / apu_tx_count[i] / MB);
+		LPRINTF("    APU receive: %x, %lu MB/s\n", apu_rx_count[i],
+			s * iterations * TTC_CLK_FREQ_HZ / apu_rx_count[i] / MB);
+		LPRINTF("    RPU send: %x, %lu MB/s\n", rpu_tx_count[i],
+			s * iterations * TTC_CLK_FREQ_HZ / rpu_tx_count[i] / MB);
+		LPRINTF("    RPU receive: %x, %lu MB/s\n", rpu_rx_count[i],
+			s * iterations * TTC_CLK_FREQ_HZ / rpu_rx_count[i] / MB);
 	}
 
 out:
