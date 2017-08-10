@@ -260,7 +260,7 @@ static int measure_shmem_latency(struct channel_s *ch)
 		}
 
 		/* report avg latencies */
-		LPRINTF("Shmem size %lu latency result:\n", s);
+		LPRINTF("package size %lu latency result:\n", s);
 		LPRINTF("APU to RPU average latency: %u ns \n",
 			apu_to_rpu_sum / ITERATIONS * NS_PER_SEC / TTC_CLK_FREQ_HZ );
 		LPRINTF("RPU to APU average latency: %u ns \n",
