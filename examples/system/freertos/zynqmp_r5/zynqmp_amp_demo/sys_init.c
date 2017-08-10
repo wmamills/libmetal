@@ -225,10 +225,9 @@ int init_irq()
 }
 
 /**
- * @brief platform_register_metal_device() - Register libmetal devices.
- *        This function register the libmetal generic bus, and then
- *        register the IPI, shared memory descriptor and shared memory
- *        devices to the libmetal generic bus.
+ * @brief platform_register_metal_device() - Statically register libmetal
+ *        devices. This function registers the IPI, shared memory and devices
+ *        to the libmetal generic bus.
  *
  * @return 0 - succeeded, non-zero for failures.
  */
