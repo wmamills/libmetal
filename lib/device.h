@@ -129,11 +129,14 @@ extern int metal_bus_find(const char *name, struct metal_bus **bus);
 /**
  * @brief	Statically register a generic libmetal device.
  *
- * Devices may be statically registered at application initialization, or may
- * be dynamically opened via sysfs or libfdt based enumeration at runtime.
- * This interface is used for static registration of devices.  Subsequent calls
+ * In non-Linux systems, devices are always requried to be statically
+ * registered at applicaiton initialization.
+ * In Linux system, devices can be dynamically opened via sysfs or libfdt based
+ * enumeration at runtime.
+ * This interface is used for static registration of devices. Subsequent calls
  * to metal_device_open() look up in this list of pre-registered devices on the
  * "generic" bus.
+ * "generic" bus is used on non-Linux system to group the memory mapped devices.
  *
  * @param[in]	device	Generic device.
  * @return 0 on success, or -errno on failure.
