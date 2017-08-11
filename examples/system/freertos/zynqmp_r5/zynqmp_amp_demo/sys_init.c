@@ -59,6 +59,15 @@
 #define TTC0_BASE_ADDR  0xFF110000
 #define IPI_BASE_ADDR   0xFF310000
 
+/* Default generic I/O region page shift */
+/* Each I/O region can contain multiple pages.
+ * In FreeRTOS system, the memory mapping is flat, there is no
+ * virutal memory.
+ * We can assume there is only one page in the FreeRTOS system.
+ */
+#define DEFAULT_PAGE_SHIFT (-1UL)
+#define DEFAULT_PAGE_MASK  (-1UL)
+
 static XScuGic xInterruptController;
 
 const metal_phys_addr_t metal_phys[] = {
@@ -67,6 +76,18 @@ const metal_phys_addr_t metal_phys[] = {
 	TTC0_BASE_ADDR, /**< base TTC0 address */
 };
 
+/* Define metal devices table for IPI, shared memory and TTC devices.
+ * Linux system uses device tree to describe devices. Unlike Linux,
+ * there is no standard device abstraction for FreeRTOS system, we
+ * uses libmetal devices structure to describe the devices we used in
+ * the example.
+ * The IPI, shared memory and TTC devices are memory mapped
+ * devices. For this type of devices, it is required to provide
+ * accessible memory mapped regions, and interrupt information.
+ * In FreeRTOS system, the memory mapping is flat. As you can see
+ * in the table before, we set the virtual address "virt" the same
+ * as the physical address.
+ */
 static struct metal_device metal_dev_table[] = {
 	{
 		/* IPI device */
@@ -225,9 +246,15 @@ int init_irq()
 }
 
 /**
- * @brief platform_register_metal_device() - Statically register libmetal
- *        devices. This function registers the IPI, shared memory and devices
- *        to the libmetal generic bus.
+ * @brief platform_register_metal_device() - Statically Register libmetal
+ *        devices.
+ *        This function registers the IPI, shared memory and
+ *        TTC devices to the libmetal generic bus.
+ *        Libmetal uses bus structure to group the devices. Before you can
+ *        access the device with libmetal device operation, you will need to
+ *        register the device to a libmetal supported bus.
+ *        For non-Linux system, libmetal only supports "generic" bus, which is
+ *        used to manage the memory mapped devices.
  *
  * @return 0 - succeeded, non-zero for failures.
  */
