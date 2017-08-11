@@ -41,6 +41,7 @@
 #define IPI_DEV_NAME    "ff340000.ipi"
 #define SHM_DEV_NAME    "3ed80000.shm"
 #define TTC_DEV_NAME    "ff110000.timer"
+
 /* Apply this snippet to the device tree in an overlay so that
  * Linux userspace can see and use TTC0:
  *   &TTC0 {
@@ -61,14 +62,14 @@
 #define IPI_MASK        0x100 /* IPI mask for kick from RPU. */
 
 /* TTC counter offsets */
-#define XTTCPS_CLK_CNTRL_OFFSET 0x0 /* TTC counter clock control reg offset */
-#define XTTCPS_CNT_CNTRL_OFFSET 0xC /* TTC counter control reg offset */
-#define XTTCPS_CNT_VAL_OFFSET 0x18 /* TTC counter val reg offset */
+#define XTTCPS_CLK_CNTRL_OFFSET 0x0  /* TTC counter clock control reg offset */
+#define XTTCPS_CNT_CNTRL_OFFSET 0xC  /* TTC counter control reg offset */
+#define XTTCPS_CNT_VAL_OFFSET   0x18 /* TTC counter val reg offset */
 #define XTTCPS_CNT_OFFSET(ID) ((ID) == 1 ? 0 : 1 << (ID)) /* TTC counter offset
-						           ID is from 1 to 3 */
+							     ID is from 1 to 3 */
 
 /* TTC counter control masks */
-#define XTTCPS_CNT_CNTRL_RST_MASK  0x10U /* TTC counter constrol reset mask */
+#define XTTCPS_CNT_CNTRL_RST_MASK  0x10U /* TTC counter control reset mask */
 #define XTTCPS_CNT_CNTRL_DIS_MASK  0x01U /* TTC counter control disable mask */
 
 #define LPRINTF(format, ...) \
