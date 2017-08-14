@@ -93,15 +93,15 @@ extern struct metal_bus metal_generic_bus;
 
 /** Libmetal device structure. */
 struct metal_device {
-	const char             *name; /**< Device name */
-	struct metal_bus       *bus; /**< Bus that contains device */
+	const char             *name;       /**< Device name */
+	struct metal_bus       *bus;        /**< Bus that contains device */
 	unsigned               num_regions; /**< Number of I/O regions in
 					      device */
 	struct metal_io_region regions[METAL_MAX_DEVICE_REGIONS]; /**< Array of
                                                         I/O regions in device*/
-	struct metal_list	node; /**< Node on bus' list of devices */
-	int                     irq_num; /**< Number of IRQs per device */
-	void                    *irq_info; /**< IRQ ID */
+	struct metal_list      node;       /**< Node on bus' list of devices */
+	int                    irq_num;    /**< Number of IRQs per device */
+	void                   *irq_info;  /**< IRQ ID */
 };
 
 /**
@@ -129,8 +129,8 @@ extern int metal_bus_find(const char *name, struct metal_bus **bus);
 /**
  * @brief	Statically register a generic libmetal device.
  *
- * In non-Linux systems, devices are always requried to be statically
- * registered at applicaiton initialization.
+ * In non-Linux systems, devices are always required to be statically
+ * registered at application initialization.
  * In Linux system, devices can be dynamically opened via sysfs or libfdt based
  * enumeration at runtime.
  * This interface is used for static registration of devices. Subsequent calls
