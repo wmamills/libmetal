@@ -62,7 +62,7 @@
 /* Default generic I/O region page shift */
 /* Each I/O region can contain multiple pages.
  * In baremetal system, the memory mapping is flat, there is no
- * virutal memory.
+ * virtual memory.
  * We can assume there is only one page in the whole baremetal system.
  */
 #define DEFAULT_PAGE_SHIFT (-1UL)

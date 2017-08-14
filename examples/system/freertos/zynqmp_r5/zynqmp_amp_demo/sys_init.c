@@ -62,13 +62,13 @@
 /* Default generic I/O region page shift */
 /* Each I/O region can contain multiple pages.
  * In FreeRTOS system, the memory mapping is flat, there is no
- * virutal memory.
+ * virtual memory.
  * We can assume there is only one page in the FreeRTOS system.
  */
 #define DEFAULT_PAGE_SHIFT (-1UL)
 #define DEFAULT_PAGE_MASK  (-1UL)
 
-static XScuGic xInterruptController;
+extern XScuGic xInterruptController;
 
 const metal_phys_addr_t metal_phys[] = {
 	IPI_BASE_ADDR, /**< base IPI address */
@@ -91,66 +91,64 @@ const metal_phys_addr_t metal_phys[] = {
 static struct metal_device metal_dev_table[] = {
 	{
 		/* IPI device */
-		IPI_DEV_NAME,
-		NULL,
-		1,
-		{
+		.name = IPI_DEV_NAME,
+		.bus = NULL,
+		.num_regions = 1,
+		.regions = {
 			{
-				(void *)IPI_BASE_ADDR,
-				&metal_phys[0],
-				0x1000,
-				(sizeof(metal_phys_addr_t) << 3),
-				(unsigned long)(-1),
-				DEVICE_NONSHARED | PRIV_RW_USER_RW,
-				{NULL},
+				.virt = (void *)IPI_BASE_ADDR,
+				.physmap = &metal_phys[0],
+				.size = 0x1000,
+				.page_shift = DEFAULT_PAGE_SHIFT,
+				.page_mask = DEFAULT_PAGE_MASK,
+				.mem_flags = DEVICE_NONSHARED | PRIV_RW_USER_RW,
+				.ops = {NULL},
 			}
 		},
-		{NULL},
-		1,
-		(void *)IPI_IRQ_VECT_ID,
-
+		.node = {NULL},
+		.irq_num = 1,
+		.irq_info = (void *)IPI_IRQ_VECT_ID,
 	},
 	{
 		/* Shared memory management device */
-		SHM_DEV_NAME,
-		NULL,
-		1,
-		{
+		.name = SHM_DEV_NAME,
+		.bus = NULL,
+		.num_regions = 1,
+		.regions = {
 			{
-				(void *)SHM_BASE_ADDR,
-				&metal_phys[1],
-				0x1000000,
-				(sizeof(metal_phys_addr_t) << 3),
-				(unsigned long)(-1),
-				NORM_SHARED_NCACHE | PRIV_RW_USER_RW,
-				{NULL},
+				.virt = (void *)SHM_BASE_ADDR,
+				.physmap = &metal_phys[1],
+				.size = 0x1000000,
+				.page_shift = DEFAULT_PAGE_SHIFT,
+				.page_mask = DEFAULT_PAGE_MASK,
+				.mem_flags = NORM_SHARED_NCACHE |
+						PRIV_RW_USER_RW,
+				.ops = {NULL},
 			}
 		},
-		{NULL},
-		0,
-		NULL,
-
+		.node = {NULL},
+		.irq_num = 0,
+		.irq_info = NULL,
 	},
 	{
 		/* ttc0 */
-		TTC_DEV_NAME,
-		NULL,
-		1,
-		{
+		.name = TTC_DEV_NAME,
+		.bus = NULL,
+		.num_regions = 1,
+		.regions = {
 			{
-				(void *)TTC0_BASE_ADDR ,
-				&metal_phys[2],
-				0x1000,
-				(sizeof(metal_phys_addr_t) << 3),
-				(unsigned long)(-1),
-				DEVICE_NONSHARED | PRIV_RW_USER_RW,
-				{NULL},
+				.virt = (void *)TTC0_BASE_ADDR ,
+				.physmap = &metal_phys[2],
+				.size = 0x1000,
+				.page_shift = DEFAULT_PAGE_SHIFT,
+				.page_mask = DEFAULT_PAGE_MASK,
+				.mem_flags = DEVICE_NONSHARED | PRIV_RW_USER_RW,
+				.ops = {NULL},
 			}
 		},
-		{NULL},
-		0,
-		NULL,
-
+		.node = {NULL},
+		.irq_num = 0,
+		.irq_info = NULL,
 	},
 };
 
