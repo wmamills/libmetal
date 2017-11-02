@@ -305,13 +305,13 @@ static void *metal_linux_irq_handling(void *args)
 		pfds_total = j;
 		for (i = 0; i < pfds_total; i++) {
 			if ( (pfds[i].fd == _irqs.irq_reg_fd) &&
-			     (pfds[i].revents & (POLLIN | POLLERR))) {
+			     (pfds[i].revents & (POLLIN | POLLRDNORM))) {
 				/* IRQ registration change notification */
 				if (read(pfds[i].fd, (void*)&val, sizeof(uint64_t)) < 0)
 					metal_log(METAL_LOG_ERROR,
 					"%s, read irq fd %d failed.\n",
 					__func__, pfds[i].fd);
-			} else if ((pfds[i].revents & (POLLIN | POLLERR))) {
+			} else if ((pfds[i].revents & (POLLIN | POLLRDNORM))) {
 				irq_handled = 0;
 				dev = NULL;
 				for(j = 0, hddec = &_irqs.hds[pfds[i].fd][0];
