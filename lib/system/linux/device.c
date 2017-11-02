@@ -284,7 +284,10 @@ static void metal_uio_dev_close(struct linux_bus *lbus,
 	(void)lbus;
 
 	if ((intptr_t)ldev->device.irq_info >= 0)
-		metal_irq_register(ldev->fd, NULL, NULL, NULL);
+		/* Normally this call would not be needed, and is added as precaution.
+		   Also for uio there is only 1 interrupt associated to the fd/device,
+		   we therefore do not need to specify a particular device */
+		metal_irq_unregister(ldev->fd, NULL, NULL, NULL);
 
 	if (ldev->override) {
 		sysfs_write_attribute(ldev->override, "", 1);
@@ -305,7 +308,7 @@ static void metal_uio_dev_irq_ack(struct linux_bus *lbus,
 {
 	(void)lbus;
 	(void)irq;
-	unsigned int irq_info = 1;
+	int irq_info = 1;
 	unsigned int val;
 	int ret;
 
