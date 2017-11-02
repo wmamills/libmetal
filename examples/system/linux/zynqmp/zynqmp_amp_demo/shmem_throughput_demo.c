@@ -379,6 +379,8 @@ static int measure_shmem_throughput(struct channel_s* ch)
 			s * iterations * TTC_CLK_FREQ_HZ / rpu_rx_count[i] / MB);
 	}
 
+	LPRINTF("Finished shared memory throughput\n");
+
 out:
 	if (lbuf)
 		metal_free_memory(lbuf);
@@ -475,8 +477,8 @@ int shmem_throughput_demo()
 
 	/* disable IPI interrupt */
 	metal_io_write32(ch.ipi_io, IPI_IDR_OFFSET, IPI_MASK);
-	/* deregister IPI irq handler by setting the handler to 0 */
-	metal_irq_register(ipi_irq, 0, ch.ipi_dev, &ch);
+	/* unregister IPI irq handler by setting the handler to 0 */
+	metal_irq_unregister(ipi_irq, 0, ch.ipi_dev, &ch);
 
 out:
 	if (ch.ttc_dev)

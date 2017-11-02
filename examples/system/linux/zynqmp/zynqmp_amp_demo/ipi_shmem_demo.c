@@ -401,8 +401,8 @@ int ipi_shmem_demo()
 
 	/* disable IPI interrupt */
 	metal_io_write32(ipi_io, IPI_IDR_OFFSET, IPI_MASK);
-	/* deregister IPI irq handler by setting the handler to 0 */
-	metal_irq_register(ipi_irq, 0, ipi_dev, ipi_io);
+	/* unregister IPI irq handler by setting the handler to 0 */
+	metal_irq_unregister(ipi_irq, 0, ipi_dev, ipi_io);
 
 out:
 	if (shm_dev)
