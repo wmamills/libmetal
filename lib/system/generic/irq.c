@@ -61,7 +61,6 @@ struct metal_irq_desc {
 /** IRQ state structure */
 struct metal_irqs_state {
 	struct metal_irq_desc hds; /**< interrupt descriptors */
-	unsigned int intr_enable;  /**< interrupt enable */
 	metal_mutex_t irq_lock;    /**< access lock */
 };
 
@@ -248,11 +247,7 @@ int metal_irq_unregister(int irq,
 
 unsigned int metal_irq_save_disable(void)
 {
-	if (_irqs.intr_enable == 1) {
-		sys_irq_save_disable();
-		_irqs.intr_enable = 0;
-	}
-
+	sys_irq_save_disable();
 	return 0;
 }
 
@@ -260,20 +255,17 @@ void metal_irq_restore_enable(unsigned int flags)
 {
 	(void)flags;
 
-	if (_irqs.intr_enable == 0) {
-		sys_irq_restore_enable();
-		_irqs.intr_enable = 1;
-	}
+	sys_irq_restore_enable();
 }
 
 void metal_irq_enable(unsigned int vector)
 {
-        sys_irq_enable(vector);
+	sys_irq_enable(vector);
 }
 
 void metal_irq_disable(unsigned int vector)
 {
-        sys_irq_disable(vector);
+	sys_irq_disable(vector);
 }
 
 /**
