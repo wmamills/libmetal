@@ -10,7 +10,7 @@ if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
     collect (PROJECT_INC_DIRS "${HUGETLBFS_INCLUDE_DIR}")
     collect (PROJECT_LIB_DEPS "${HUGETLBFS_LIBRARIES}")
     add_definitions(-DHAVE_HUGETLBFS_H)
-  endif(HugeTLBFS_FOUND)
+  endif(HUGETLBFS_FOUND)
 
   find_package (LibSysFS REQUIRED)
   collect (PROJECT_INC_DIRS "${LIBSYSFS_INCLUDE_DIR}")
