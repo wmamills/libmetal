@@ -45,7 +45,7 @@
 
 #define MPU_REGION_SIZE_MIN 0x20
 
-/* application code would have enabled IRQ initially */
+/* default value setting for disabling interrupts */
 static unsigned int int_old_val = XIL_EXCEPTION_ALL;
 
 void sys_irq_restore_enable(void)
@@ -55,13 +55,10 @@ void sys_irq_restore_enable(void)
 
 void sys_irq_save_disable(void)
 {
-	unsigned int value = 0;
+	int_old_val = mfcpsr() & XIL_EXCEPTION_ALL;
 
-	value = mfcpsr() & XIL_EXCEPTION_ALL;
-
-	if (value != int_old_val) {
+	if (XIL_EXCEPTION_ALL != int_old_val) {
 		Xil_ExceptionDisableMask(XIL_EXCEPTION_ALL);
-		int_old_val = value;
 	}
 }
 
