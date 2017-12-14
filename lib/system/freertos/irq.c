@@ -34,13 +34,13 @@
  */
 
 #include <errno.h>
-#include "metal/irq.h"
-#include "metal/sys.h"
-#include "metal/log.h"
-#include "metal/mutex.h"
-#include "metal/list.h"
-#include "metal/utilities.h"
-#include "metal/alloc.h"
+#include <metal/irq.h>
+#include <metal/sys.h>
+#include <metal/log.h>
+#include <metal/mutex.h>
+#include <metal/list.h>
+#include <metal/utilities.h>
+#include <metal/alloc.h>
 
 /** IRQ handlers descriptor structure */
 struct metal_irq_hddesc {

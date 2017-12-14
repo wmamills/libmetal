@@ -37,11 +37,11 @@
 #define METAL_INTERNAL
 
 #include "metal-test.h"
-#include "metal/irq.h"
-#include "metal/log.h"
-#include "metal/sys.h"
-#include "metal/list.h"
-#include "metal/utilities.h"
+#include <metal/irq.h>
+#include <metal/log.h>
+#include <metal/sys.h>
+#include <metal/list.h>
+#include <metal/utilities.h>
 
 
 int irq_handler(int irq, void *priv)

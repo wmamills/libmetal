@@ -35,13 +35,13 @@
 
 #include <pthread.h>
 #include <sched.h>
-#include "metal/device.h"
-#include "metal/irq.h"
-#include "metal/sys.h"
-#include "metal/mutex.h"
-#include "metal/list.h"
-#include "metal/utilities.h"
-#include "metal/alloc.h"
+#include <metal/device.h>
+#include <metal/irq.h>
+#include <metal/sys.h>
+#include <metal/mutex.h>
+#include <metal/list.h>
+#include <metal/utilities.h>
+#include <metal/alloc.h>
 #include <sys/time.h>
 #include <sys/eventfd.h>
 #include <stdint.h>

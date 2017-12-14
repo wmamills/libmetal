@@ -39,8 +39,8 @@
 #include "xil_mmu.h"
 #include "xscugic.h"
 #include "xil_exception.h"
-#include "metal/io.h"
-#include "metal/sys.h"
+#include <metal/io.h>
+#include <metal/sys.h>
 
 #define MB (1024 * 1024UL)
 #define GB (1024 * 1024 * 1024UL)

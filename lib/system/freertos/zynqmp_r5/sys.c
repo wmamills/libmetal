@@ -40,8 +40,8 @@
 #include "xil_mpu.h"
 #include "xscugic.h"
 #include "xil_exception.h"
-#include "metal/io.h"
-#include "metal/sys.h"
+#include <metal/io.h>
+#include <metal/sys.h>
 
 #define MPU_REGION_SIZE_MIN 0x20
 

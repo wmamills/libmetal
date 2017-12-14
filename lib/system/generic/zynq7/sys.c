@@ -37,10 +37,10 @@
 #include <stdint.h>
 #include "xil_cache.h"
 #include "xil_mmu.h"
-#include "metal/io.h"
+#include <metal/io.h>
 #include "xscugic.h"
 #include "xil_exception.h"
-#include "metal/sys.h"
+#include <metal/sys.h>
 
 /* Each TTB descriptor covers a 1MB region */
 #define     ARM_AR_MEM_TTB_SECT_SIZE               1024*1024

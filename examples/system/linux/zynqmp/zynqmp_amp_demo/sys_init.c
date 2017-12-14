@@ -31,7 +31,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include "metal/sys.h"
+#include <metal/sys.h>
 #include "common.h"
 
 int sys_init()
