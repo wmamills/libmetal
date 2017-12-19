@@ -28,14 +28,47 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "metal-test.h"
 #include <metal/sys.h>
 #include <metal/utilities.h>
 
 static METAL_DECLARE_LIST(test_cases);
+
+/*
+ * Not every enviornment has strerror() implemented.
+ */
+#ifdef NOT_HAVE_STRERROR
+char __attribute__((weak)) *strerror(int errnum)
+{
+	static char errstr[33];
+	int i, j;
+
+	if (errnum < 0)
+		return NULL;
+
+	i = 0;
+	while (errnum) {
+		int digit = errnum % 10;
+
+		errstr[i++] = '0' + (char)digit;
+		errnum /= 10;
+	}
+	errstr[i] = '\0';
+
+	j = i - 1;
+	for (i = 0; i < j; i++, j--) {
+		char *tmp = &errstr[i];
+
+		errstr[i] = errstr[j];
+		errstr[j] = *tmp;
+	}
+	return errstr;
+}
+#endif
 
 void metal_add_test_case(struct metal_test_case *test_case)
 {
@@ -66,7 +99,8 @@ int metal_tests_run(struct metal_init_params *params)
 		metal_log(METAL_LOG_INFO,"running [%s]\n", test_case->name);
 		error = test_case->test();
 		metal_log(METAL_LOG_INFO,"result [%s]%s %s%s%s\n",
-		       test_case->name, pad, error ? "fail" : "pass",
+		       test_case->name, pad,
+		       error ? "fail" : "pass",
 		       error ? " - error: " : "",
 		       error ? strerror(-error) : "");
 		if (error)
