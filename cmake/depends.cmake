@@ -24,7 +24,7 @@ if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 
 else ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 
-  # TODO: fix for find_path() to detect stdatomic.h 
+  # TODO: fix for find_path() to detect stdatomic.h
   # find_path (HAVE_STDATOMIC_H stdatomic.h)
   set (_saved_cmake_required_flags ${CMAKE_REQUIRED_FLAGS})
   set (CMAKE_REQUIRED_FLAGS "-c" CACHE STRING "")
