@@ -197,7 +197,7 @@ int metal_irq_unregister(int irq,
 		irq_p = metal_container_of(node, struct metal_irq_desc, node);
 
 		if (irq_p->irq == irq) {
-			struct metal_list *h_node;
+			struct metal_list *h_node, *h_prenode;
 			struct metal_irq_hddesc *hdl_p;
 			unsigned int delete_count = 0;
 
@@ -216,7 +216,9 @@ int metal_irq_unregister(int irq,
 					metal_log(METAL_LOG_DEBUG,
 					          "%s: unregister hd=%p drv_id=%p dev=%p\n",
 						  __func__, hdl_p->hd, hdl_p->drv_id, hdl_p->dev);
+					h_prenode = h_node->prev;
 					metal_irq_delete_node(h_node, hdl_p);
+					h_node = h_prenode;
 					delete_count++;
 				}
 			}
