@@ -42,17 +42,20 @@ void metal_add_test_case(struct metal_test_case *test_case)
 	metal_list_add_tail(&test_cases, &test_case->node);
 }
 
-int metal_tests_run(void)
+int metal_tests_run(struct metal_init_params *params)
 {
-	struct metal_init_params params = METAL_INIT_DEFAULTS;
+	struct metal_init_params dparams = METAL_INIT_DEFAULTS;
 	struct metal_test_case *test_case;
 	struct metal_list *node;
 	int error, errors = 0;
 	const char *dots = "..................................";
 	const char *pad;
 
-	params.log_level = METAL_LOG_DEBUG;
-	error = metal_init(&params);
+	if (!params)
+		params = &dparams;
+
+	params->log_level = METAL_LOG_DEBUG;
+	error = metal_init(params);
 	if (error)
 		return error;
 
