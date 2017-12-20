@@ -63,9 +63,9 @@ int metal_tests_run(struct metal_init_params *params)
 		test_case = metal_container_of(node, struct metal_test_case,
 					       node);
 		pad = dots + strlen(test_case->name);
-		printf("running [%s]\n", test_case->name);
+		metal_log(METAL_LOG_INFO,"running [%s]\n", test_case->name);
 		error = test_case->test();
-		printf("result [%s]%s %s%s%s\n",
+		metal_log(METAL_LOG_INFO,"result [%s]%s %s%s%s\n",
 		       test_case->name, pad, error ? "fail" : "pass",
 		       error ? " - error: " : "",
 		       error ? strerror(-error) : "");
