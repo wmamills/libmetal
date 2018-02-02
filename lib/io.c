@@ -29,6 +29,7 @@
  */
 
 #include <errno.h>
+#include <limits.h>
 #include <metal/io.h>
 #include <metal/sys.h>
 
@@ -38,11 +39,16 @@ void metal_io_init(struct metal_io_region *io, void *virt,
 	      const struct metal_io_ops *ops)
 {
 	const struct metal_io_ops nops = {NULL, NULL, NULL, NULL, NULL, NULL};
+
 	io->virt = virt;
 	io->physmap = physmap;
 	io->size = size;
 	io->page_shift = page_shift;
-	io->page_mask = (1UL << page_shift) - 1UL;
+	if (page_shift >= sizeof(io->page_mask) * CHAR_BIT)
+		/* avoid overflow */
+		io->page_mask = -1UL;
+	else
+		io->page_mask = (1UL << page_shift) - 1UL;
 	io->mem_flags = mem_flags;
 	io->ops = ops ? *ops : nops;
 	metal_sys_io_mem_map(io);
