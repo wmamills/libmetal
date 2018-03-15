@@ -182,7 +182,6 @@ metal_io_phys(struct metal_io_region *io, unsigned long offset)
 			     sizeof(offset) * CHAR_BIT ?
 			     0 : offset >> io->page_shift);
 	return (io->physmap != NULL && offset <= io->size
-		&& io->physmap[page] != METAL_BAD_PHYS
 		? io->physmap[page] + (offset & io->page_mask)
 		: METAL_BAD_PHYS);
 }
