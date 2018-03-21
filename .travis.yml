@@ -67,6 +67,6 @@ script:
   - if [[ "$TARGET" == "linux" ]]; then
        mkdir -p build-linux &&
        cd build-linux &&
-       cmake .. &&
-       make VERBOSE=1;
+       cmake .. -DWITH_TESTS_EXEC=on &&
+       make VERBOSE=1 all test;
     fi
