@@ -41,47 +41,59 @@
 #define __METAL_ZEPHYR_MUTEX__H__
 
 #include <metal/atomic.h>
+#include <kernel.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct {
-	atomic_int v;
-} metal_mutex_t;
+typedef struct k_sem metal_mutex_t;
 
-#define METAL_MUTEX_DEFINE(m) metal_mutex_t m = { ATOMIC_VAR_INIT(0) }
+#define METAL_MUTEX_DEFINE(m) K_SEM_DEFINE(m, 1, 1)
 
-static inline void __metal_mutex_init(metal_mutex_t *mutex)
+static inline void __metal_mutex_init(metal_mutex_t *m)
 {
-	atomic_store(&mutex->v, 0);
+	k_sem_init(m, 1, 1);
 }
 
-static inline void __metal_mutex_deinit(metal_mutex_t *mutex)
+static inline void __metal_mutex_deinit(metal_mutex_t *m)
 {
-	(void)mutex;
+	(void)m;
 }
 
-static inline int __metal_mutex_try_acquire(metal_mutex_t *mutex)
+static inline int __metal_mutex_try_acquire(metal_mutex_t *m)
 {
-	return 1 - atomic_flag_test_and_set(&mutex->v);
+        int key = irq_lock(), ret = 1;
+
+        if (m->count) {
+                m->count = 0;
+                ret = 0;
+        }
+
+        irq_unlock(key);
+
+        return ret;
 }
 
-static inline void __metal_mutex_acquire(metal_mutex_t *mutex)
+static inline int __metal_mutex_is_acquired(metal_mutex_t *m)
 {
-	while (atomic_flag_test_and_set(&mutex->v)) {
-		;
-	}
+        int key = irq_lock(), ret;
+
+	ret = m->count;
+
+        irq_unlock(key);
+
+	return ret;
 }
 
-static inline void __metal_mutex_release(metal_mutex_t *mutex)
+static inline void __metal_mutex_acquire(metal_mutex_t *m)
 {
-	atomic_flag_clear(&mutex->v);
+	k_sem_take(m, K_FOREVER);
 }
 
-static inline int __metal_mutex_is_acquired(metal_mutex_t *mutex)
+static inline void __metal_mutex_release(metal_mutex_t *m)
 {
-	return atomic_load(&mutex->v);
+	k_sem_give(m);
 }
 
 #ifdef __cplusplus
