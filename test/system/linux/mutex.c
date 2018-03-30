@@ -53,7 +53,7 @@ static void *mutex_thread(void *arg)
 
 static int mutex(void)
 {
-	metal_mutex_t lock = METAL_MUTEX_INIT;
+	metal_mutex_t lock;
 	const int threads = 10;
 	int rc;
 

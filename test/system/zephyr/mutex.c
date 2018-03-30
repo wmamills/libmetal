@@ -35,8 +35,10 @@ static const int mutex_test_count = 1000;
 
 static int mutex(void)
 {
-	metal_mutex_t lock = METAL_MUTEX_INIT;
+	metal_mutex_t lock;
 	int i;
+
+	metal_mutex_init(&lock);
 
 	for (i = 0; i < mutex_test_count; i++) {
 		metal_mutex_acquire(&lock);

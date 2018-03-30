@@ -54,7 +54,7 @@ typedef struct {
 	atomic_int v;
 } metal_mutex_t;
 
-#define METAL_MUTEX_INIT		{ ATOMIC_VAR_INIT(0) }
+#define METAL_MUTEX_DEFINE(m) metal_mutex_t m = { ATOMIC_VAR_INIT(0) }
 
 static inline int __metal_mutex_cmpxchg(metal_mutex_t *mutex,
 					int exp, int val)

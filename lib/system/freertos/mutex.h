@@ -53,7 +53,7 @@ typedef struct {
 	SemaphoreHandle_t m;
 } metal_mutex_t;
 
-#define METAL_MUTEX_INIT		{ NULL }
+#define METAL_MUTEX_DEFINE(m) metal_mutex_t m = { NULL }
 
 static inline void metal_mutex_init(metal_mutex_t *mutex)
 {
