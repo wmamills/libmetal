@@ -34,13 +34,14 @@
  * @brief	machine specific system primitives implementation.
  */
 
+#include <metal/compiler.h>
+#include <metal/io.h>
+#include <metal/sys.h>
 #include <stdint.h>
 #include "xil_cache.h"
-#include "xil_mmu.h"
-#include <metal/io.h>
-#include "xscugic.h"
 #include "xil_exception.h"
-#include <metal/sys.h>
+#include "xil_mmu.h"
+#include "xscugic.h"
 
 /* Translation table is 16K in size */
 #define     ARM_AR_MEM_TTB_SIZE                    16*1024
