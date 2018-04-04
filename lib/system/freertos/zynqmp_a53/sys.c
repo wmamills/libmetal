@@ -33,14 +33,15 @@
  * @brief	machine specific system primitives implementation.
  */
 
-#include <stdint.h>
-#include "xil_cache.h"
-#include "xreg_cortexa53.h"
-#include "xil_mmu.h"
-#include "xscugic.h"
-#include "xil_exception.h"
+#include <metal/compiler.h>
 #include <metal/io.h>
 #include <metal/sys.h>
+#include <stdint.h>
+#include "xil_cache.h"
+#include "xil_exception.h"
+#include "xil_mmu.h"
+#include "xreg_cortexa53.h"
+#include "xscugic.h"
 
 #define MB (1024 * 1024UL)
 #define GB (1024 * 1024 * 1024UL)
