@@ -5,6 +5,7 @@ collect (PROJECT_LIB_DIRS "${CMAKE_CURRENT_BINARY_DIR}")
 collect (PROJECT_INC_DIRS "${CMAKE_CURRENT_BINARY_DIR}/include")
 
 collect (PROJECT_LIB_HEADERS alloc.h)
+collect (PROJECT_LIB_HEADERS assert.h)
 collect (PROJECT_LIB_HEADERS atomic.h)
 collect (PROJECT_LIB_HEADERS cache.h)
 collect (PROJECT_LIB_HEADERS compiler.h)
