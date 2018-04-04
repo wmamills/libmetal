@@ -33,6 +33,7 @@
  * @brief	machine specific system primitives implementation.
  */
 
+#include <metal/assert.h>
 #include <metal/io.h>
 #include <metal/sys.h>
 #include <stdint.h>
@@ -107,7 +108,7 @@ static void sys_irq_change(unsigned int vector, int is_enable)
 #else
 	(void)vector;
 	(void)is_enable;
-	assert(0);
+	metal_assert(0);
 #endif
 }
 

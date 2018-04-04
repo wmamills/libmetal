@@ -30,6 +30,7 @@
 
 #include <string.h>
 #include <errno.h>
+#include <metal/assert.h>
 #include <metal/device.h>
 #include <metal/list.h>
 #include <metal/log.h>
@@ -113,7 +114,7 @@ int metal_device_open(const char *bus_name, const char *dev_name,
 
 void metal_device_close(struct metal_device *device)
 {
-	assert(device && device->bus);
+	metal_assert(device && device->bus);
 	if (device->bus != &metal_generic_bus)
 		metal_list_del(&device->node);
 	if (device->bus->ops.dev_close)

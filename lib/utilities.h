@@ -36,8 +36,8 @@
 #ifndef __METAL_UTILITIES__H__
 #define __METAL_UTILITIES__H__
 
-#include <assert.h>
 #include <stdint.h>
+#include <metal/assert.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -160,7 +160,7 @@ static inline unsigned long metal_log2(unsigned long in)
 {
 	unsigned long result;
 
-	assert((in & (in - 1)) == 0);
+	metal_assert((in & (in - 1)) == 0);
 
 	for (result = 0; (1UL << result) < in; result ++)
 		;

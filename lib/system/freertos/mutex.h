@@ -40,7 +40,7 @@
 #ifndef __METAL_FREERTOS_MUTEX__H__
 #define __METAL_FREERTOS_MUTEX__H__
 
-#include <assert.h>
+#include <metal/assert.h>
 #include "FreeRTOS.h"
 #include "semphr.h"
 
@@ -57,39 +57,39 @@ typedef struct {
 
 static inline void __metal_mutex_init(metal_mutex_t *mutex)
 {
-	assert(mutex);
+	metal_assert(mutex);
 	mutex->m = xSemaphoreCreateMutex();
-	assert(mutex->m != NULL);
+	metal_assert(mutex->m != NULL);
 }
 
 static inline void __metal_mutex_deinit(metal_mutex_t *mutex)
 {
-	assert(mutex && mutex->m != NULL);
+	metal_assert(mutex && mutex->m != NULL);
 	vSemaphoreDelete(mutex->m);
 	mutex->m=NULL;
 }
 
 static inline int __metal_mutex_try_acquire(metal_mutex_t *mutex)
 {
-	assert(mutex && mutex->m != NULL);
+	metal_assert(mutex && mutex->m != NULL);
 	return xSemaphoreTake(mutex->m, ( TickType_t ) 0 );
 }
 
 static inline void __metal_mutex_acquire(metal_mutex_t *mutex)
 {
-	assert(mutex && mutex->m != NULL);
+	metal_assert(mutex && mutex->m != NULL);
 	xSemaphoreTake(mutex->m, portMAX_DELAY);
 }
 
 static inline void __metal_mutex_release(metal_mutex_t *mutex)
 {
-	assert(mutex && mutex->m != NULL);
+	metal_assert(mutex && mutex->m != NULL);
 	xSemaphoreGive(mutex->m);
 }
 
 static inline int __metal_mutex_is_acquired(metal_mutex_t *mutex)
 {
-	assert(mutex && mutex->m != NULL);
+	metal_assert(mutex && mutex->m != NULL);
 	return (NULL == xSemaphoreGetMutexHolder(mutex->m)) ? 0 : 1;
 }
 

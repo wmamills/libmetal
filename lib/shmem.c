@@ -34,6 +34,7 @@
  */
 
 #include <errno.h>
+#include <metal/assert.h>
 #include <metal/shmem.h>
 #include <metal/sys.h>
 #include <metal/utilities.h>
@@ -41,10 +42,10 @@
 int metal_shmem_register_generic(struct metal_generic_shmem *shmem)
 {
 	/* Make sure that we can be found. */
-	assert(shmem->name && strlen(shmem->name) != 0);
+	metal_assert(shmem->name && strlen(shmem->name) != 0);
 
 	/* Statically registered shmem regions cannot have a destructor. */
-	assert(!shmem->io.ops.close);
+	metal_assert(!shmem->io.ops.close);
 
 	metal_list_add_tail(&_metal.common.generic_shmem_list,
 			    &shmem->node);

@@ -36,11 +36,11 @@
 #ifndef __METAL_IO__H__
 #define __METAL_IO__H__
 
-#include <assert.h>
 #include <limits.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <metal/assert.h>
 #include <metal/compiler.h>
 #include <metal/atomic.h>
 #include <metal/sys.h>
@@ -264,7 +264,7 @@ metal_io_read(struct metal_io_region *io, unsigned long offset,
 #else
 		return metal_processor_io_read64((atomic_ullong *)ptr, order);
 #endif
-	assert(0);
+	metal_assert(0);
 	return 0; /* quiet compiler */
 }
 
@@ -300,7 +300,7 @@ metal_io_write(struct metal_io_region *io, unsigned long offset,
 		metal_processor_io_write64((atomic_ullong *)ptr, value, order);
 #endif
 	else
-		assert (0);
+		metal_assert (0);
 }
 
 #define metal_io_read8_explicit(_io, _ofs, _order)			\
