@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017, Linaro Limited. and Contributors. All rights reserved.
+ * Copyright (c) 2018, Nordic Semiconductor ASA and Contributors.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,32 +30,21 @@
  */
 
 /*
- * @file	zephyr/init.c
- * @brief	Zephyr libmetal initialization.
+ * @file	zephyr/log.h
+ * @brief	Zephyr libmetal log handler definition.
  */
 
-#include <metal/device.h>
-#include <metal/sys.h>
-#include <metal/utilities.h>
+#ifndef __METAL_METAL_LOG__H__
+#error "Include metal/log.h instead of metal/zephyr/log.h"
+#endif
 
-#include "log.h"
+#ifndef __METAL_ZEPHYR_LOG_H__
+#define __METAL_ZEPHYR_LOG_H__
 
-extern int metal_irq_init(void);
-extern void metal_irq_deinit(void);
+#include <metal/log.h>
 
-struct metal_state _metal;
+void metal_zephyr_log_handler(enum metal_log_level level,
+			      const char *format, ...);
 
-int metal_sys_init(const struct metal_init_params *params)
-{
-	if (params->log_handler == NULL)
-		metal_set_log_handler(metal_zephyr_log_handler);
+#endif
 
-	metal_bus_register(&metal_generic_bus);
-	return metal_irq_init();
-}
-
-void metal_sys_finish(void)
-{
-	metal_irq_deinit();
-	metal_bus_unregister(&metal_generic_bus);
-}

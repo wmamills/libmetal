@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017, Linaro Limited. and Contributors. All rights reserved.
+ * Copyright (c) 2018, Nordic Semiconductor ASA and Contributors.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,32 +30,36 @@
  */
 
 /*
- * @file	zephyr/init.c
- * @brief	Zephyr libmetal initialization.
+ * @file	zephyr/log.c
+ * @brief	Zephyr libmetal log handler.
  */
 
-#include <metal/device.h>
-#include <metal/sys.h>
-#include <metal/utilities.h>
+#include <stdarg.h>
+#include <metal/log.h>
+#include <zephyr.h>
 
-#include "log.h"
+static const char *level_strs[] = {
+	"metal: emergency: ",
+	"metal: alert:     ",
+	"metal: critical:  ",
+	"metal: error:     ",
+	"metal: warning:   ",
+	"metal: notice:    ",
+	"metal: info:      ",
+	"metal: debug:     ",
+};
 
-extern int metal_irq_init(void);
-extern void metal_irq_deinit(void);
-
-struct metal_state _metal;
-
-int metal_sys_init(const struct metal_init_params *params)
+void metal_zephyr_log_handler(enum metal_log_level level,
+			      const char *format, ...)
 {
-	if (params->log_handler == NULL)
-		metal_set_log_handler(metal_zephyr_log_handler);
+	va_list args;
 
-	metal_bus_register(&metal_generic_bus);
-	return metal_irq_init();
+	if (level <= METAL_LOG_EMERGENCY || level > METAL_LOG_DEBUG)
+		level = METAL_LOG_EMERGENCY;
+	printk("%s", level_strs[level]);
+
+	va_start(args, format);
+	vprintk(format, args);
+	va_end(args);
 }
 
-void metal_sys_finish(void)
-{
-	metal_irq_deinit();
-	metal_bus_unregister(&metal_generic_bus);
-}
