@@ -34,6 +34,7 @@
 #include <misc/printk.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 #define BLK_SIZE_MIN 128
 #define BLK_SIZE_MAX 1024
@@ -94,39 +95,12 @@ void metal_test_add_functions()
 	metal_test_add_mutex();
 }
 
-void metal_zephyr_log_handler(enum metal_log_level level,
-			       const char *format, ...)
-{
-	char msg[1024];
-	va_list args;
-	static const char *level_strs[] = {
-		"metal: emergency: ",
-		"metal: alert:     ",
-		"metal: critical:  ",
-		"metal: error:     ",
-		"metal: warning:   ",
-		"metal: notice:    ",
-		"metal: info:      ",
-		"metal: debug:     ",
-	};
-
-	va_start(args, format);
-	vsnprintf(msg, sizeof(msg), format, args);
-	va_end(args);
-
-	if (level <= METAL_LOG_EMERGENCY || level > METAL_LOG_DEBUG)
-		level = METAL_LOG_EMERGENCY;
-
-	printk("%s%s", level_strs[level], msg);
-}
-
 int main(void)
 {
 	struct metal_init_params params;
+	memset(&params, 0, sizeof(struct metal_init_params));
 
 	metal_test_add_functions();
-
-	params.log_handler = metal_zephyr_log_handler;
 	(void)metal_tests_run(&params);
 
 	while (1)
