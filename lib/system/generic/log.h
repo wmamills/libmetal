@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2018, Xilinx Inc. and Contributors. All rights reserved.
+ * Copyright (c) 2018, Linaro Limited. and Contributors. All rights reserved.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,26 +30,23 @@
  */
 
 /*
- * @file	zephyr/log.h
- * @brief	Zephyr libmetal log handler definition.
+ * @file	generic/log.h
+ * @brief	Generic libmetal log handler definition.
  */
 
 #ifndef __METAL_METAL_LOG__H__
-#error "Include metal/log.h instead of metal/zephyr/log.h"
+#error "Include metal/log.h instead of metal/generic/log.h"
 #endif
 
-#ifndef __METAL_ZEPHYR_LOG__H__
-#define __METAL_ZEPHYR_LOG__H__
+#ifndef __METAL_GENERIC_LOG__H__
+#define __METAL_GENERIC_LOG__H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void metal_zephyr_log_handler(enum metal_log_level level,
-			      const char *format, ...);
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __METAL_ZEPHYR_LOG__H__ */
+#endif /* __METAL_GENERIC_LOG__H__ */

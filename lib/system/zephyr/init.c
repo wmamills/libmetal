@@ -37,8 +37,6 @@
 #include <metal/sys.h>
 #include <metal/utilities.h>
 
-#include "log.h"
-
 extern int metal_irq_init(void);
 extern void metal_irq_deinit(void);
 
