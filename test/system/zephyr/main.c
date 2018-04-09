@@ -97,11 +97,8 @@ void metal_test_add_functions()
 
 int main(void)
 {
-	struct metal_init_params params;
-	memset(&params, 0, sizeof(struct metal_init_params));
-
 	metal_test_add_functions();
-	(void)metal_tests_run(&params);
+	(void)metal_tests_run(NULL);
 
 	while (1)
                metal_generic_default_poll();
