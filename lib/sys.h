@@ -79,12 +79,6 @@ struct metal_init_params {
 	enum metal_log_level		log_level;
 };
 
-#define METAL_INIT_DEFAULTS				\
-{							\
-	.log_handler	= metal_default_log_handler,	\
-	.log_level	= METAL_LOG_INFO,			\
-}
-
 /**
  * System independent runtime state for libmetal.  This is part of a system
  * specific singleton data structure (@see _metal).
@@ -109,6 +103,14 @@ struct metal_common_state {
 struct metal_state;
 
 #include <metal/system/@PROJECT_SYSTEM@/sys.h>
+
+#ifndef METAL_INIT_DEFAULTS
+#define METAL_INIT_DEFAULTS				\
+{							\
+	.log_handler	= metal_default_log_handler,	\
+	.log_level	= METAL_LOG_INFO,		\
+}
+#endif
 
 /** System specific runtime data. */
 extern struct metal_state _metal;
