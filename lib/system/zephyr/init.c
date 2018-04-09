@@ -44,9 +44,6 @@ struct metal_state _metal;
 
 int metal_sys_init(const struct metal_init_params *params)
 {
-	if (params->log_handler == NULL)
-		metal_set_log_handler(metal_zephyr_log_handler);
-
 	metal_bus_register(&metal_generic_bus);
 	return metal_irq_init();
 }

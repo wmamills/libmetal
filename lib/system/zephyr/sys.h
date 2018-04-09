@@ -48,6 +48,12 @@
 extern "C" {
 #endif
 
+#define METAL_INIT_DEFAULTS				\
+{							\
+	.log_handler	= metal_zephyr_log_handler,	\
+	.log_level	= METAL_LOG_INFO,		\
+}
+
 #ifndef METAL_MAX_DEVICE_REGIONS
 #define METAL_MAX_DEVICE_REGIONS 1
 #endif
