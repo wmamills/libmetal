@@ -47,12 +47,12 @@ extern "C" {
 extern void metal_machine_cache_flush(void *addr, unsigned int len);
 extern void metal_machine_cache_invalidate(void *addr, unsigned int len);
 
-void __metal_cache_flush(void *addr, unsigned int len)
+static inline void __metal_cache_flush(void *addr, unsigned int len)
 {
 	metal_machine_cache_flush(addr, len);
 }
 
-void __metal_cache_invalidate(void *addr, unsigned int len)
+static inline void __metal_cache_invalidate(void *addr, unsigned int len)
 {
 	metal_machine_cache_invalidate(addr, len);
 }
