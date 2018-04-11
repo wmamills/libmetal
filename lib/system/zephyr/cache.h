@@ -16,6 +16,7 @@
 #ifndef __METAL_ZEPHYR_CACHE__H__
 #define __METAL_ZEPHYR_CACHE__H__
 
+#include <cache.h>
 #include <metal/utilities.h>
 
 #ifdef __cplusplus
@@ -24,9 +25,7 @@ extern "C" {
 
 static inline void __metal_cache_flush(void *addr, unsigned int len)
 {
-	metal_unused(addr);
-	metal_unused(len);
-	return;
+	sys_cache_flush((vaddr_t) addr, len);
 }
 
 static inline void __metal_cache_invalidate(void *addr, unsigned int len)
