@@ -27,6 +27,9 @@ if (NOT DEFINED MACHINE)
 endif (NOT DEFINED MACHINE)
 message ("-- Machine: ${MACHINE}")
 
+# handle if '-' in machine name
+string (REPLACE "-" "_" MACHINE ${MACHINE})
+
 if (NOT DEFINED PROJECT_SYSTEM)
   string (TOLOWER ${CMAKE_SYSTEM_NAME}      PROJECT_SYSTEM)
   string (TOUPPER ${CMAKE_SYSTEM_NAME}      PROJECT_SYSTEM_UPPER)
