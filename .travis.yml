@@ -15,7 +15,7 @@ env:
     - ZEPHYR_SDK_DOWNLOAD_FOLDER=https://github.com/zephyrproject-rtos/meta-zephyr-sdk/releases/download/$ZEPHYR_SDK_VERSION
     - ZEPHYR_SDK_SETUP_BINARY=zephyr-sdk-$ZEPHYR_SDK_VERSION-setup.run
     - ZEPHYR_SDK_DOWNLOAD_URL=$ZEPHYR_SDK_DOWNLOAD_FOLDER/$ZEPHYR_SDK_SETUP_BINARY
-    - FREERTOS_ZIP_URL=https://downloads.sourceforge.net/project/freertos/FreeRTOS/V10.0.1/FreeRTOSv10.0.1.zip
+    - FREERTOS_ZIP_URL=https://cfhcable.dl.sourceforge.net/project/freertos/FreeRTOS/V10.0.1/FreeRTOSv10.0.1.zip
 
 matrix:
   fast_finish: true
