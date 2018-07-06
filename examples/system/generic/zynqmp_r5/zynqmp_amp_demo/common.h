@@ -20,6 +20,7 @@
 #include <metal/io.h>
 #include <metal/device.h>
 #include <sys/types.h>
+#include <xil_printf.h>
 #include "sys_init.h"
 
 /* Devices names */
