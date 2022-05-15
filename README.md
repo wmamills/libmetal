@@ -80,6 +80,14 @@ removed in 2019.1.
 The [zephyr-libmetal](https://github.com/zephyrproject-rtos/libmetal)
 implements the libmetal for the Zephyr project. It is mainly  a fork of this repository, with some add-ons for integration in the Zephyr project.
 
+This repository can be used directly in a zephyr manifest.  Just point your
+west.yml file at it and optionally the branch you wish to use.  When done,
+this library will integrate into the zephyr cmake system and nothing else
+needs for be done.
+
+If however, you do not wish to do this, you can try the manual build
+instructions below.
+
 Following instruction is only to be able to run test application on a QEMU running
 a Zephyr environment.
 
