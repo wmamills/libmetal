@@ -5,8 +5,7 @@ Origin:
    https://github.com/OpenAMP/libmetal
 
 Import instructions:
-   When we import libmetal we remove the tests/ and examples/ dir to reduce
-   the amount of code imported.
+   This repository can be used as-is with the zephyr build system.
 
 Purpose:
    HAL abstraction layer used by open-amp
@@ -25,9 +24,6 @@ Dependencies:
 
 URL:
    https://github.com/OpenAMP/libmetal
-
-commit:
-   2371f615bb0f7968e7bd2483301a9ab9d957bec9
 
 Maintained-by:
    External
