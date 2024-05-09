@@ -30,8 +30,8 @@ build_linux(){
 	apt-get install -y libsysfs-dev libhugetlbfs-dev gcc &&
 	mkdir -p build-linux &&
 	cd build-linux &&
-	cmake .. -DWITH_TESTS_EXEC=on &&
-	make VERBOSE=1 all test &&
+	cmake .. -DWITH_TESTS_EXEC=on || exit 1
+	make VERBOSE=1 all test || exit 1
 	exit 0
 }
 
