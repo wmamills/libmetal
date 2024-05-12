@@ -4,8 +4,9 @@
 name: libmetal Continuous Integration
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [ main wam-test ]
     paths-ignore:
       - docs/**
       - cmake/**
