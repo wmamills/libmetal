@@ -5,6 +5,7 @@ readonly TARGET="$1"
 ZEPHYR_TOOLCHAIN_VARIANT=zephyr
 ZEPHYR_SDK_API_FOLDER=https://api.github.com/repos/zephyrproject-rtos/sdk-ng/releases/latest
 ZEPHYR_SDK_SETUP_TAR=zephyr-sdk-.*linux-x86_64.tar.xz
+ZEPHYR_VER=v3.6.0
 
 FREERTOS_ZIP_URL=https://sourceforge.net/projects/freertos/files/FreeRTOS/V10.0.1/FreeRTOSv10.0.1.zip
 
@@ -82,7 +83,7 @@ build_zephyr(){
 	pv $ZEPHYR_SDK_TAR -i 3 -ptebr -f | tar xJ || exit 1
 	rm -rf $ZEPHYR_SDK_TAR || exit 1
 	yes | ./$ZEPHYR_SDK_SETUP_DIR/setup.sh || exit 1
-	west init ./zephyrproject || exit 1
+	west init --mr $ZEPHYR_VER ./zephyrproject || exit 1
 	cd ./zephyrproject || exit 1
 	west update --narrow || exit 1
 	west zephyr-export || exit 1
