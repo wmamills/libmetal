@@ -37,6 +37,11 @@ if (NOT DEFINED MACHINE)
 endif (NOT DEFINED MACHINE)
 message ("-- Machine: ${MACHINE}")
 
+if (NOT DEFINED PROJECT_VENDOR)
+  set (PROJECT_VENDOR "none")
+endif (NOT DEFINED PROJECT_VENDOR)
+message ("-- Vendor:  ${PROJECT_VENDOR}")
+
 # handle if '-' in machine name
 string (REPLACE "-" "_" MACHINE ${MACHINE})
 
